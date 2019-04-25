@@ -1,4 +1,5 @@
-<form {{action 'submitForm' url depth keyword on="submit"}}>
+<div class="form-container">
+<form {{action 'submitForm' on="submit"}}>
     <div class="input-field col s6">
         {{input value=url id="search-url" type="text"}}
         <label for="search-url">Url to Search</label>
@@ -33,4 +34,4 @@
         <i class="material-icons right">search</i>
     </button>
 </form>  
-    
+</div>
