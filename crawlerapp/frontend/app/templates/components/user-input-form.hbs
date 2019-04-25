@@ -1,0 +1,36 @@
+<form {{action 'submitForm' url depth keyword on="submit"}}>
+    <div class="input-field col s6">
+        {{input value=url id="search-url" type="text"}}
+        <label for="search-url">Url to Search</label>
+    </div>
+    <p>
+        {{#radio-button
+        value="bfs"
+        groupValue=searchMethod
+        changed=(action "methodChanged")
+        }}
+        <span>Breadth First Search</span>
+        {{/radio-button}}
+    </p>
+    <p>
+        {{#radio-button
+        value="dfs"
+        groupValue=searchMethod
+        changed=(action "methodChanged")
+        }}
+        <span>Depth First Search</span>
+        {{/radio-button}}
+    </p>
+    <div class="input-field col s6">
+        {{input value=depth id="search-depth" type="text"}}
+        <label for="search-depth">Search Depth</label>
+    </div>
+        <div class="input-field col s6">
+        {{input value=keyword id="search-keyword" type="text"}}
+        <label for="search-depth">Keyword</label>
+    </div>
+     <button class="btn waves-effect waves-light" type="submit">Search
+        <i class="material-icons right">search</i>
+    </button>
+</form>  
+    
