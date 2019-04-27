@@ -2,17 +2,17 @@ import Component from '@ember/component';
 
 export default Component.extend({
 
-    searchMethod: 'bfs',
+    searchMethod: 'bfs', //default to breadth first search
+
 
     actions: {
-        submitForm(url, depth, keyword){
-
+        submitForm(){
             const formValues = {
-                'URL': url,
+                'URL': this.get('url'),
                 'Search Method': this.searchMethod,
-                'Search Depth': depth,
-                'Search Keyword': keyword
-            }
+                'Search Depth': this.get('depth'),
+                'Search Keyword': this.get('keyword')
+            };
             console.log("form submitted with: ", formValues);
         },
 
@@ -20,5 +20,4 @@ export default Component.extend({
             this.set('searchMethod', value);
         }
     }
-   
 });
