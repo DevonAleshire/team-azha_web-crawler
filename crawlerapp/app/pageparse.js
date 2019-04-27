@@ -3,12 +3,21 @@ var puppeteer = require('puppeteer');
 var processUrl = require('url');
 const request = require('request');
 
-var urlArr = [];
-
 module.exports = {
 
-    searcHelper: function() {
+    searcHelper: function(url, searchType, searchDepth, keyword) {
+        //TEST VARIABLES
+        searchType = 1;
+        searchDepth = 1;
+        keyword = "";
 
+        if (urlIsValid(url)) {
+            //TODO: CALL APPROPRIATE CRAWL BASED ON TYPE
+            getPage(url);
+        } else {
+            console.log("Invalid URL\n");
+            return false;
+        }
     },
     crawlDepthFirst: function() {
 
@@ -31,39 +40,23 @@ module.exports = {
     getPage: function (url) {
         //TEST URL
         //const url = 'https://www.reddit.com';
-        
-        if (validateUrl(url)) {
-            console.log("IN IF\n");
-            puppeteer
-                .launch()
-                .then(function(browser) {
-                    return browser.newPage();
-                })
-                .then(function(page) {
-                    return page.goto(url).then(function() {
-                        return page.content();
-                    });
-                })
-                .then(function(html) {
-                    cheerio('a', html).each(function() {
-                        urlArr.push(cheerio(this).attr('href'));
-                    });
-                })
-                .then(function() {
-                    console.log(urlArr);
-                })
-                .catch(function(err) {
-                    console.log(err);
-                });
-        } else {
-            console.log("Invalid URL\n");
-            return false;
-        }
-        console.log(urlArr);
+        var urlArr = [];
+
+        puppeteer
+            .launch()
+            .then(browser => initBrowser(browser))
+            .then(page => navigateUrl(page, url))
+            .then(html => parseHtml(html))
+            .then(function() {
+                console.log(urlArr);
+            })
+            .catch(function(err) {
+                console.log(err);
+            });
     }
 };
 
-function validateUrl (testUrl) {
+function urlIsValid (testUrl) {
     try {
         new processUrl.URL(testUrl);
 
@@ -82,3 +75,34 @@ function validateUrl (testUrl) {
         return false;
     }
 };
+
+function parseHtml (html) {
+    try {
+        cheerio('a', html).each(function() {
+            urlArr.push(cheerio(this).attr('href'));
+        });
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
+
+function navigateUrl (page, url) {
+    try {
+        return page.goto(url).then(function() {
+            return page.content();
+        });
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
+
+function initBrowser (browser) {
+    try {
+        return browser.newPage();
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
