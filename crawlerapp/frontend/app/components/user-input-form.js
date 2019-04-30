@@ -16,6 +16,9 @@ export default Component.extend({
             console.log("form submitted with: ", formValues);
         },
 
+        //To Do: Data down, actions up 
+        //https://dockyard.com/blog/2015/10/14/best-practices-data-down-actions-up 
+
         methodChanged(value){
             this.set('searchMethod', value);
         }
