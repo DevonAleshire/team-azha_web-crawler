@@ -1,0 +1,24 @@
+{{user-input-form model=model transitionInComponent=(action "transitionInController")}}
+
+
+<table>
+    <tr>
+        <th>Id</th>
+        <th>URL</th>
+        <th>Search Method</th>
+        <th>Depth</th>
+        <th>Keyword</th>
+    </tr>
+{{#each model as |request|}}
+<tr>
+    <td>{{request.id}}</td>
+    <td>{{request.url}}</td>
+    <td>{{request.searchMethod}}</td>
+    <td>{{request.depth}}</td>
+    <td>{{request.keyword}}</td>
+</tr>
+{{/each}}
+</table>
+
+
+{{outlet}}

@@ -1,20 +1,39 @@
 import Component from '@ember/component';
+import { inject as service } from '@ember/service';
 
 export default Component.extend({
+
+    store: service(),
 
     searchMethod: 'bfs', //default to breadth first search
 
 
     actions: {
         submitForm(){
-            const formValues = {
-                'URL': this.get('url'),
-                'Search Method': this.searchMethod,
-                'Search Depth': this.get('depth'),
-                'Search Keyword': this.get('keyword')
-            };
-            console.log("form submitted with: ", formValues);
+
+            //some sort of validation
+
+            let searchRequest = this.store.createRecord('search-request', {
+                url: this.get('url'),
+                searchMethod: this.searchMethod,
+                depth: this.get('depth'),
+                keyword: this.get('keyword')
+            });
+
+            searchRequest.save();
+
+            this.set('url', '');
+            this.set('searchMethod', 'bfs');
+            this.set('depth', '');
+            this.set('keyword', '');
+
+            
+
+            //this.transitionInComponent();
         },
+
+        //To Do: Data down, actions up 
+        //https://dockyard.com/blog/2015/10/14/best-practices-data-down-actions-up 
 
         methodChanged(value){
             this.set('searchMethod', value);
