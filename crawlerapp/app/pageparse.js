@@ -1,7 +1,7 @@
 var cheerio = require('cheerio');
 var puppeteer = require('puppeteer');
 var processUrl = require('url');
-const request = require('request');
+var request = require('request');
 
 module.exports = {
 
@@ -25,13 +25,7 @@ module.exports = {
     crawlBreadthFirst: function() {
 
     },
-    collectUrls: function() {
-
-    },
     findKeyword: function() {
-
-    },
-    selectRandomPage: function() {
 
     },
     dataTransform: function() {
@@ -46,9 +40,11 @@ module.exports = {
             .launch()
             .then(browser => initBrowser(browser))
             .then(page => navigateUrl(page, url))
-            .then(html => parseHtml(html))
-            .then(function() {
-                console.log(urlArr);
+            .then(html => parseHtml(url, html, urlArr))
+            .then(function(newArr) {
+                //console.log(newArr);
+                var chosenUrl = chooseRandomUrl(newArr);
+                console.log(chosenUrl);
             })
             .catch(function(err) {
                 console.log(err);
@@ -76,11 +72,19 @@ function urlIsValid (testUrl) {
     }
 };
 
-function parseHtml (html) {
+function parseHtml (url, html, urlArr) {
     try {
+        //Iterate through each a tag
         cheerio('a', html).each(function() {
-            urlArr.push(cheerio(this).attr('href'));
+            //Get the href attribute of the a tag
+            var nextUrl = cheerio(this).attr('href');
+            //Prepend to relative path if protocol and domain info are missing
+            var cleanUrl = new processUrl.URL(nextUrl, url).href;
+            //Push on to URL array
+            urlArr.push(cleanUrl);
         });
+        //Create a new array of unique URLs only and return
+        return deDuplicateUrls(urlArr);
     } catch (err) {
         console.log(err);
         return;
@@ -101,6 +105,30 @@ function navigateUrl (page, url) {
 function initBrowser (browser) {
     try {
         return browser.newPage();
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
+
+function deDuplicateUrls (urlArr) {
+    try {
+        //Create a new array of unique URLs only and return
+        return [...new Set(urlArr)];
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
+
+function chooseRandomUrl (urlArr) {
+    try {
+        //Choose a random Url from the deduplicated array
+        var randNum = Math.random();
+
+        var randChoice = Math.floor(randNum * urlArr.length);
+
+        return urlArr[randChoice];
     } catch (err) {
         console.log(err);
         return;
