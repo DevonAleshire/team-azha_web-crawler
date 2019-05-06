@@ -19,8 +19,33 @@ module.exports = {
             return false;
         }
     },
-    crawlDepthFirst: function() {
+    crawlDepthFirstHelper: function(url, searchDepth, keyword) {
+        var crawlRes = this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        return crawlRes;
+    },
+    crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
+        var depth = currentDepth + 1;
 
+        (async () => {
+            var pupp = await puppeteer.launch();
+            var page = await pupp.newPage();
+            await page.goto(url);
+            var html = await page.evaluate(() => document.body.innerHTML);
+            var found = await page.evaluate(() => window.find(keyword));
+            //console.log(found);
+            var urls = parseHtml(url, html);
+            //console.log(urls);
+            var chosenUrl = chooseRandomUrl(urls);
+            //console.log(chosenUrl);
+            pupp.close();
+            if (currentDepth < searchDepth) {
+                //console.log("calling again");
+                return this.crawlDepthFirst(chosenUrl, searchDepth, depth, keyword);
+            } else {
+                //console.log("returning");
+                return urls;
+            }
+        })();
     },
     crawlBreadthFirst: function() {
 
@@ -46,6 +71,7 @@ module.exports = {
                 var chosenUrl = chooseRandomUrl(newArr);
                 console.log(chosenUrl);
             })
+            .close()
             .catch(function(err) {
                 console.log(err);
             });
@@ -72,9 +98,10 @@ function urlIsValid (testUrl) {
     }
 };
 
-function parseHtml (url, html, urlArr) {
+function parseHtml (url, html) {
     try {
         //Iterate through each a tag
+        var urlArr = [];
         cheerio('a', html).each(function() {
             //Get the href attribute of the a tag
             var nextUrl = cheerio(this).attr('href');
