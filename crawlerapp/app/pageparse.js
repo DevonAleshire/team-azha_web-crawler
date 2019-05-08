@@ -5,7 +5,7 @@ var request = require('request');
 
 module.exports = {
 
-    searcHelper: function(url, searchType, searchDepth, keyword) {
+    searchHelper: function(url, searchType, searchDepth, keyword) {
         //TEST VARIABLES
         searchType = 1;
         searchDepth = 1;
