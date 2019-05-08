@@ -1,4 +1,5 @@
 // app/routes.js
+import searchHelper from './pageparse';
 
 module.exports = function (router) {
     //Commented out for testing api route
@@ -7,10 +8,8 @@ module.exports = function (router) {
     // });
 
     router.route('/api/search').get(function (req, res) {
-        console.log('Hello from the node server');
-        
-        //var isValid = webcrawler.urlIsValid()
-        res.json({ response: "Response from server"});
+        console.log('Hello from the node server');  
+        res.json({ response: "Response from server", isValid: true });
     });
 
     router.route('*').get(function (req, res) {
