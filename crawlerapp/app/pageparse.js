@@ -6,7 +6,7 @@ var request = require('request');
 module.exports = {
 
     searchHelper: function(url, searchType, searchDepth, keyword) {
-        if (searchType == 0) {
+        if (searchType == "dfs") {
             return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
             console.log("BFS NOT IMPLEMENTED!\n");
@@ -49,10 +49,17 @@ module.exports = {
             });
     },
     crawlBreadthFirstHelper: function() {
-
+        var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
+        return crawlRes;
     },
-    crawlBreadthFirst: function() {
-
+    crawlBreadthFirst: function(url, searchDepth, currentDepth, keyword) {
+        // TODO
+        var mock = {};
+        mock.url = "NOT IMPLEMENTED";
+        mock.depth = depth;
+        mock.links = {};
+        mock.keyword = false;
+        return mock;
     },
     dataTransform: function() {
 
