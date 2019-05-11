@@ -9,6 +9,8 @@
                 <th>Search Method</th>
                 <th>Depth</th>
                 <th>Keyword</th>
+                <th>Repeat Search</th>
+                <th>Delete</th>
             </tr>
         {{#each model as |request|}}
             <tr>
@@ -17,6 +19,12 @@
                 <td>{{request.searchMethod}}</td>
                 <td>{{request.depth}}</td>
                 <td>{{request.keyword}}</td>
+                <td>
+                    <a {{action "repeatSearch" request.id}} class="btn-floating btn-medium waves-effect waves-light blue"><i class="material-icons">youtube_searched_for</i></a>
+                </td>
+                <td>
+                    <a {{action "deleteSearch" request.id}} class="btn-floating btn-medium waves-effect waves-light red"><i class="material-icons">clear</i></a>
+                </td>
             </tr>
         {{/each}}
         </table>
