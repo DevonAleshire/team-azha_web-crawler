@@ -1,7 +1,13 @@
 import Route from '@ember/routing/route';
 import RSVP from 'rsvp';
+import $ from 'jquery'
 
 export default Route.extend({
+
+    beforeModel(){
+        $('.show-loading').show();
+    },
+
     model(params){
         const formParams = this.store.findRecord('search-request', params.id);
 
@@ -17,16 +23,21 @@ export default Route.extend({
 
              return fetch(apiUrl)
                 .then(res => res.json())
-                .then(data => data); 
+                .then((data) => {
+                    console.log(data);
+                    return data
+                }); 
         };
-
         const returnData = formParams.then(record => record.data)
                   .then((data) => makeApiCall(data)); 
 
         return RSVP.hash({
             data: returnData,
         });
+    },
 
+    afterModel(){
+        $('.show-loading').hide();
     }
 
 

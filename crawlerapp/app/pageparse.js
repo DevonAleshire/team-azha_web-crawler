@@ -14,8 +14,8 @@ module.exports = {
         }
 
     },
-    crawlDepthFirstHelper: function(url, searchDepth, keyword) {
-        var crawlRes = this.crawlDepthFirst(url, searchDepth, 0, keyword);
+    crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
+        var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
         return crawlRes;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {

@@ -1,16 +1,10 @@
+
 <div class="backend-list">
-<ul> Data reveived from Backend
-    <li>
-        URL: {{model.data.url}}
-    </li>
-    <li>
-        Method: {{model.data.searchMethod}}
-    </li>
-    <li>
-        Depth: {{model.data.depth}}
-    </li>
-    <li>
-        Keyword: {{model.data.keyword}}
-    </li>
-</ul>
+    <ul> <h3>Data Received from Backend</h3>
+        {{#each-in model.data.links as |links other|}}
+            <li>
+                {{links}}
+            </li>
+        {{/each-in}}
+    </ul>
 </div>
