@@ -12,6 +12,7 @@ module('Unit | Model | search request', function(hooks) {
     assert.ok(model);
   });
 
+  //TODO: Check if this actually does anything
   test('Search-request record created accurately', function (assert) {
     //Lookup Store
     let store = this.owner.lookup('service:store');

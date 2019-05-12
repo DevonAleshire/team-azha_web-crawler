@@ -22,6 +22,7 @@ export default Component.extend({
             });
 
             searchRequest.save();
+            // eslint-disable-next-line no-console
             console.log(searchRequest.id);
 
             this.set('url', '');

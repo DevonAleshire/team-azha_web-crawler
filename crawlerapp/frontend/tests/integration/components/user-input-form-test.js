@@ -6,24 +6,30 @@ import hbs from 'htmlbars-inline-precompile';
 module('Integration | Component | user-input-form', function (hooks) {
   setupRenderingTest(hooks);
 
-  test('it renders', async function (assert) {
+  test('user-input-form renders', async function (assert) {
     // Set any properties with this.set('myProperty', 'value');
     // Handle any actions with this.set('myAction', function(val) { ... });
-    await render(hbs`{{user-input-form model=model}}`);
+
+    //ACT
+    await render(hbs`{{user-input-form}}`);
 
     assert.equal(this.element.textContent.trim(), '');
-
-    // Template block usage:
-    await render(hbs`
-      {{#user-input-form}}
-        template block text
-      {{/user-input-form}}`);
-
-    assert.equal(this.element.textContent.trim(), 'template block text');
   });
 
-  test('user-input-form form submit', async function(assert){
-    
+  test('Pending Implementation', async function (assert) {
+    // Template block usage:
+    // await render(hbs`
+    //     {{#user-input-form}}
+    //       template block text
+    //     {{/user-input-form}}`);
+
+    // assert.equal(this.element.textContent.trim(), 'template block text');
+    assert(false, true);
+  })
+
+  //TODO: Figure out how to mock transitionTo ?
+  test('user-input-form form submit', async function (assert) {
+
     this.set('url', 'url');
     this.set('searchMethod', 'dfs');
     this.set('depth', '10');
