@@ -1,2 +1,14 @@
 @import 'components/user-input-form.css';
 @import 'components/nav-bar.css';
+
+.lower-components {
+    display: flex;
+}
+
+.history-component {
+    flex-basis:  40%;
+}
+
+.backend-list {
+    margin-left: 300px; 
+}

@@ -1,0 +1,14 @@
+@import 'components/user-input-form-3e5c1f3286e6183810d2b6c076bc7300.css';
+@import 'components/nav-bar-c9c4201ed1534c24a6588b1f9565357e.css';
+
+.lower-components {
+    display: flex;
+}
+
+.history-component {
+    flex-basis:  40%;
+}
+
+.backend-list {
+    margin-left: 300px; 
+}
