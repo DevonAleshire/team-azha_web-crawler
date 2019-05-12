@@ -5,28 +5,61 @@ var request = require('request');
 
 module.exports = {
 
-    searcHelper: function(url, searchType, searchDepth, keyword) {
-        //TEST VARIABLES
-        searchType = 1;
-        searchDepth = 1;
-        keyword = "";
-
-        if (urlIsValid(url)) {
-            //TODO: CALL APPROPRIATE CRAWL BASED ON TYPE
-            getPage(url);
+    searchHelper: function(url, searchType, searchDepth, keyword) {
+        if (searchType == "dfs") {
+            return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
-            console.log("Invalid URL\n");
-            return false;
+            console.log("BFS NOT IMPLEMENTED!\n");
+            return this.crawlBreadthFirstHelper(url, searchDepth, keyword);
         }
-    },
-    crawlDepthFirst: function() {
 
     },
-    crawlBreadthFirst: function() {
-
+    crawlDepthFirstHelper: function(url, searchDepth, keyword) {
+        var crawlRes = this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        return crawlRes;
     },
-    findKeyword: function() {
+    crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
+        return puppeteer.launch()
+            .then(async browser => {
+                var page = await initBrowser(browser);
+                var html = await navigateUrl(page, url);
+                browser.close();    //close now to save memory
 
+                var newDepth = currentDepth + 1;
+                var crawlRes = {"url": url,
+                        "depth": currentDepth};
+
+                var urls = parseHtml(url, html);
+                crawlRes.links = urls;
+
+                var found = await findKeyword(html, keyword);
+                crawlRes.keywordFound = found;
+
+                var chosenUrl = await chooseRandomUrl(urls);
+
+                if (currentDepth < searchDepth && found == false) {
+                    crawlRes.links[chosenUrl] = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
+                    return crawlRes;
+                } else {
+                    return crawlRes;
+                }
+            })
+            .catch(function(err) {
+                console.log(err);
+            });
+    },
+    crawlBreadthFirstHelper: function() {
+        var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
+        return crawlRes;
+    },
+    crawlBreadthFirst: function(url, searchDepth, currentDepth, keyword) {
+        // TODO
+        var mock = {};
+        mock.url = "NOT IMPLEMENTED";
+        mock.depth = depth;
+        mock.links = {};
+        mock.keyword = false;
+        return mock;
     },
     dataTransform: function() {
 
@@ -46,6 +79,7 @@ module.exports = {
                 var chosenUrl = chooseRandomUrl(newArr);
                 console.log(chosenUrl);
             })
+            .close()
             .catch(function(err) {
                 console.log(err);
             });
@@ -56,13 +90,13 @@ function urlIsValid (testUrl) {
     try {
         new processUrl.URL(testUrl);
 
-        request(testUrl, (err, res) => {
-            if (err) {
-                console.log("INVALID URL: endpoint error\n"); 
-                console.log(err); 
-                return false; 
-            }
-        });
+        // request(testUrl, (err, res) => {
+        //     if (err) {
+        //         console.log("INVALID URL: endpoint error\n"); 
+        //         console.log(err); 
+        //         return false; 
+        //     }
+        // });
         console.log("VALID URL\n"); 
         return true;
     } catch (err) {
@@ -72,19 +106,19 @@ function urlIsValid (testUrl) {
     }
 };
 
-function parseHtml (url, html, urlArr) {
+function parseHtml (url, html) {
     try {
         //Iterate through each a tag
+        var urlJson = {};
         cheerio('a', html).each(function() {
             //Get the href attribute of the a tag
             var nextUrl = cheerio(this).attr('href');
             //Prepend to relative path if protocol and domain info are missing
             var cleanUrl = new processUrl.URL(nextUrl, url).href;
-            //Push on to URL array
-            urlArr.push(cleanUrl);
+            //Add to JSON object of URLs
+            urlJson[cleanUrl] = false;
         });
-        //Create a new array of unique URLs only and return
-        return deDuplicateUrls(urlArr);
+        return urlJson;
     } catch (err) {
         console.log(err);
         return;
@@ -94,7 +128,8 @@ function parseHtml (url, html, urlArr) {
 function navigateUrl (page, url) {
     try {
         return page.goto(url).then(function() {
-            return page.content();
+            //return page.content();
+            return page.evaluate(() => document.body.innerHTML)
         });
     } catch (err) {
         console.log(err);
@@ -121,16 +156,35 @@ function deDuplicateUrls (urlArr) {
     }
 }
 
-function chooseRandomUrl (urlArr) {
+function chooseRandomUrl (urls) {
     try {
         //Choose a random Url from the deduplicated array
         var randNum = Math.random();
+        var keys = Object.keys(urls);
+        var nextUrl = keys[Math.floor(randNum * keys.length)];
 
-        var randChoice = Math.floor(randNum * urlArr.length);
-
-        return urlArr[randChoice];
+        return nextUrl;
     } catch (err) {
         console.log(err);
         return;
     }
+}
+
+function findKeyword(html, keyword) {
+    var found = false;
+    var lKeyword = keyword.toLowerCase();
+    (async () => {
+        await cheerio(html).each(function() {
+            if (cheerio(this).get(0).type == 'text') {
+                if (cheerio(this).text().toLowerCase().includes(lKeyword)) {
+                    found = true;
+                }
+            } else if (cheerio(this).get(0).type == 'tag' && cheerio(this).name != 'script') {
+                if (cheerio(this).text().toLowerCase().includes(lKeyword)) {
+                    found = true;
+                }
+            }
+        });
+    })();
+    return found;
 }
