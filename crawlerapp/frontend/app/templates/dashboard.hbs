@@ -1,7 +1,7 @@
 {{user-input-form model=model transitionInComponent=(action "transitionInController")}}
 
 
-<table>
+<table id="searchRequestTable">
     <tr>
         <th>Id</th>
         <th>URL</th>
@@ -12,10 +12,10 @@
 {{#each model as |request|}}
 <tr>
     <td>{{request.id}}</td>
-    <td>{{request.url}}</td>
-    <td>{{request.searchMethod}}</td>
-    <td>{{request.depth}}</td>
-    <td>{{request.keyword}}</td>
+    <td class="request-url">{{request.url}}</td>
+    <td class="request-search-method">{{request.searchMethod}}</td>
+    <td id="request-depth">{{request.depth}}</td>
+    <td id="request-keyword">{{request.keyword}}</td>
 </tr>
 {{/each}}
 </table>

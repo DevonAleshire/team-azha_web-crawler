@@ -14,7 +14,9 @@
   },
   "license": "ISC",
   "dependencies": {
-    "express": "^4.16.4"
+    "cheerio": "^1.0.0-rc.3",
+    "express": "^4.16.4",
+    "puppeteer": "^1.15.0"
   },
   "devDependencies": {
     "jest": "^24.7.1"
