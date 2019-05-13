@@ -48,7 +48,7 @@ module.exports = {
                 console.log(err);
             });
     },
-    crawlBreadthFirstHelper: function() {
+    crawlBreadthFirstHelper: function(url, searchDepth, keyword) {
         var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
         return crawlRes;
     },
@@ -56,7 +56,7 @@ module.exports = {
         // TODO
         var mock = {};
         mock.url = "NOT IMPLEMENTED";
-        mock.depth = depth;
+        mock.depth = searchDepth;
         mock.links = {};
         mock.keyword = false;
         return mock;
