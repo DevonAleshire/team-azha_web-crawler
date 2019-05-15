@@ -22,6 +22,7 @@ export default Route.extend({
                         `&keyword=${formData.keyword}`;
 
              return fetch(apiUrl)
+                .then(res => res.json())
                 .then((data) => {
                     console.log(data);
                     return data
