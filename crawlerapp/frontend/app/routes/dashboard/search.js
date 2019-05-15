@@ -22,9 +22,10 @@ export default Route.extend({
                         `&keyword=${formData.keyword}`;
 
              return fetch(apiUrl)
+                .then(res => res ? res.json() : res.text())
                 .then((data) => {
                     console.log(data);
-                    return data.json()
+                    return data
                 }); 
         };
         const returnData = formParams.then(record => record.data)
