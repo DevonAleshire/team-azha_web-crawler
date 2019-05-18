@@ -1,7 +1,13 @@
 var cheerio = require('cheerio');
 var puppeteer = require('puppeteer');
+var validUrl = require('valid-url');
 var processUrl = require('url');
 var request = require('request');
+var mime = require('mime');
+var robotsParser = require('robots-parser');
+
+var bfsKeyword = false;
+var bfsVisited = {};
 
 module.exports = {
 
@@ -9,7 +15,6 @@ module.exports = {
         if (searchType == "dfs") {
             return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
-            console.log("BFS NOT IMPLEMENTED!\n");
             return this.crawlBreadthFirstHelper(url, searchDepth, keyword);
         }
 
@@ -22,18 +27,20 @@ module.exports = {
         return puppeteer.launch()
             .then(async browser => {
                 var page = await initBrowser(browser);
-                var html = await navigateUrl(page, url);
+                var htmlObj = await navigateUrl(page, url);
                 browser.close();    //close now to save memory
 
                 var newDepth = currentDepth + 1;
                 var crawlRes = {"url": url,
                         "depth": currentDepth};
 
-                var urls = parseHtml(url, html);
+                var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                 crawlRes.links = urls;
 
-                var found = await findKeyword(html, keyword);
+                var found = findKeyword(htmlObj[1], keyword);
                 crawlRes.keywordFound = found;
+
+                crawlRes.destinationState = htmlObj[2];
 
                 var chosenUrl = await chooseRandomUrl(urls);
 
@@ -48,55 +55,84 @@ module.exports = {
                 console.log(err);
             });
     },
-    crawlBreadthFirstHelper: function() {
+    crawlBreadthFirstHelper: function(url, searchDepth, keyword) {
         var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
         return crawlRes;
     },
-    crawlBreadthFirst: function(url, searchDepth, currentDepth, keyword) {
-        // TODO
-        var mock = {};
-        mock.url = "NOT IMPLEMENTED";
-        mock.depth = depth;
-        mock.links = {};
-        mock.keyword = false;
-        return mock;
+    crawlBreadthFirst: async function(url, searchDepth, currentDepth, keyword) {
+        return await puppeteer.launch()
+            .then(async browser => {
+                //console.log(bfsVisited);
+                var newDepth = currentDepth + 1;
+                var crawlRes = {"url": url,
+                        "depth": currentDepth};
+
+                if (bfsVisited[url] == true) {
+                    crawlRes.visited = true;
+                    browser.close();
+                    return crawlRes;
+                } else {
+                    var page = await initBrowser(browser);
+                    var htmlObj = await navigateUrl(page, url)
+                    browser.close();    //close now to save memory
+
+                    var urls = await parseHtml(htmlObj[0], htmlObj[1]);
+                    crawlRes.links = urls;
+
+                    var found = findKeyword(htmlObj[1], keyword);
+                    if (found) {
+                        bfsKeyword = true;
+                    }
+                    crawlRes.keywordFound = found;
+
+                    crawlRes.destinationState = htmlObj[2];
+
+                    bfsVisited[url] = true;
+
+                    if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
+                        for (var i = 0; i < crawlRes.links.length; i++) {
+                            var nextUrl = crawlRes.links[i];
+                            if (bfsVisited[nextUrl] == true) {
+                                crawlRes.links[i] = {"url": nextUrl,
+                                    "depth": newDepth,
+                                    "visited": true};
+                            } else {
+                                console.log("calling!!!!");
+                                console.log(crawlRes.links[i]);
+                                crawlRes.links[i] = await this.crawlBreadthFirst(crawlRes.links[i], searchDepth, newDepth, keyword);
+                            }
+                        }
+                        return crawlRes;
+                    } else {
+                        return crawlRes;
+                    }
+                }
+            })
+            .catch(function(err) {
+                console.log(err);
+            });
     },
     dataTransform: function() {
 
     },
     getPage: function (url) {
-        //TEST URL
-        //const url = 'https://www.reddit.com';
-        var urlArr = [];
+        return puppeteer.launch()
+            .then(async browser => {
+                var page = await initBrowser(browser);
+                var html = await navigateUrl(page, url);
+                browser.close();    //close now to save memory
 
-        puppeteer
-            .launch()
-            .then(browser => initBrowser(browser))
-            .then(page => navigateUrl(page, url))
-            .then(html => parseHtml(url, html, urlArr))
-            .then(function(newArr) {
-                //console.log(newArr);
-                var chosenUrl = chooseRandomUrl(newArr);
-                console.log(chosenUrl);
-            })
-            .close()
-            .catch(function(err) {
-                console.log(err);
-            });
+                return html;
+        })
+        .catch(function(err) {
+            console.log(err);
+        });
     }
 };
 
 function urlIsValid (testUrl) {
     try {
         new processUrl.URL(testUrl);
-
-        // request(testUrl, (err, res) => {
-        //     if (err) {
-        //         console.log("INVALID URL: endpoint error\n"); 
-        //         console.log(err); 
-        //         return false; 
-        //     }
-        // });
         console.log("VALID URL\n"); 
         return true;
     } catch (err) {
@@ -107,31 +143,77 @@ function urlIsValid (testUrl) {
 };
 
 function parseHtml (url, html) {
-    try {
-        //Iterate through each a tag
-        var urlJson = {};
+    try {        
+        //Iterate through each <a> tag
+        var urlList = [];
         cheerio('a', html).each(function() {
-            //Get the href attribute of the a tag
+            //Get the href attribute of the <a> tag
             var nextUrl = cheerio(this).attr('href');
-            //Prepend to relative path if protocol and domain info are missing
-            var cleanUrl = new processUrl.URL(nextUrl, url).href;
-            //Add to JSON object of URLs
-            urlJson[cleanUrl] = false;
+            var cleanUrl = false;
+            
+            //Some a tags do not have an href property and will resolve as undefined
+            if (nextUrl != undefined) {
+                //Prepend to relative path if protocol and domain info are missing
+                cleanUrl = new processUrl.URL(nextUrl, url).href;
+                
+                var mimeType = mime.getType(cleanUrl);
+                var isValid = validUrl.isWebUri(cleanUrl);
+
+                //Check the mime type of the destination, only push html or potential html destinations
+                //The isValid check will filter out mailto and script links
+                if ((mimeType == 'text/html' || mimeType == null) && isValid == cleanUrl) {
+                    urlList.push(cleanUrl);
+                }
+            }
         });
-        return urlJson;
+        return deDuplicateUrls(urlList);
     } catch (err) {
         console.log(err);
         return;
     }
 }
 
-function navigateUrl (page, url) {
+async function navigateUrl (page, url) {
     try {
-        return page.goto(url).then(function() {
-            //return page.content();
-            return page.evaluate(() => document.body.innerHTML)
-        });
+        var urlObj = new processUrl.URL(url);
+
+        var robots = robotsParser(urlObj.origin + '/robots.txt', '*');
+        var delayMs = robots.getCrawlDelay('*') == undefined ? 0 : robots.getCrawlDelay('*');
+        var isAllowed = robots.isAllowed(url, '*');
+        var htmlObj = [];
+
+        if (!isAllowed) {       //Observe robots exclusion
+            htmlObj.push(url);
+            htmlObj.push([]);
+            htmlObj.push('disallowed');
+            return htmlObj;
+        } else {
+            await delay(delayMs);       //Observe robots crawl delay
+            return await page.goto(url, {waitUntil: 'load', timeout: 3000}).then(function() {
+                htmlObj.push(page.url());
+                return page.evaluate(() => document.body.innerHTML).then(async function(res) {
+                    var frames = page.frames();
+                    for (frame in frames) {
+                        var foo = await frames[frame].content();
+                        res = res + foo;
+                    }
+
+                    htmlObj.push(res);
+                    htmlObj.push('allowed');
+                    return htmlObj;
+                });
+            }).catch((err) => {
+                if (err.name == "TimeoutError") {
+                    htmlObj.push([]);
+                    htmlObj.push(err.name);
+                } else {
+                    htmlObj.push([]);
+                    htmlObj.push('NavigationError');
+                }
+            });
+        }
     } catch (err) {
+        console.log(url);
         console.log(err);
         return;
     }
@@ -160,8 +242,8 @@ function chooseRandomUrl (urls) {
     try {
         //Choose a random Url from the deduplicated array
         var randNum = Math.random();
-        var keys = Object.keys(urls);
-        var nextUrl = keys[Math.floor(randNum * keys.length)];
+        //var keys = Object.keys(urls);
+        var nextUrl = urls[Math.floor(randNum * urls.length)];
 
         return nextUrl;
     } catch (err) {
@@ -188,3 +270,20 @@ function findKeyword(html, keyword) {
     })();
     return found;
 }
+
+function getPage(url) {
+    return puppeteer.launch()
+        .then(async browser => {
+            var page = await initBrowser(browser);
+            var htmlObj = await navigateUrl(page, url);
+            browser.close();    //close now to save memory
+
+            return htmlObj;
+    })
+    .catch(function(err) {
+        console.log(err);
+    });
+}
+
+//https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
+const delay = ms => new Promise(res => setTimeout(res, ms));
