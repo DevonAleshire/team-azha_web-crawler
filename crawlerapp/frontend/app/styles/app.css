@@ -6,7 +6,7 @@
 }
 
 .history-component {
-    flex-basis:  40%;
+    flex-basis:  70%;
 }
 
 .backend-list {
@@ -15,4 +15,20 @@
 
 .loading-spinner {
     margin: 5% 0 0 25%;
+}
+
+.brand-logo {
+    margin-left: 0px;
+}
+
+body {
+    background-color: #e0e0e0;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+table {
+    border-collapse: collapse;
+    table-layout: fixed;
 }
