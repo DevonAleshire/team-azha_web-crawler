@@ -1,0 +1,10 @@
+
+<div class="backend-list">
+    <ul> <h3>Data Received from Backend</h3>
+        {{#each-in model.data.links as |links other|}}
+            <li>
+                {{links}}
+            </li>
+        {{/each-in}}
+    </ul>
+</div>

@@ -4,6 +4,7 @@ import { inject as service } from '@ember/service';
 export default Component.extend({
 
     store: service(),
+    router: service(),
 
     searchMethod: 'bfs', //default to breadth first search
 
@@ -21,15 +22,15 @@ export default Component.extend({
             });
 
             searchRequest.save();
+            // eslint-disable-next-line no-console
+            console.log(searchRequest.id);
 
             this.set('url', '');
             this.set('searchMethod', 'bfs');
             this.set('depth', '');
             this.set('keyword', '');
 
-            
-
-            //this.transitionInComponent();
+            this.get('router').transitionTo('/dashboard/search/' + searchRequest.id);
         },
 
         //To Do: Data down, actions up 

@@ -19,8 +19,8 @@ module.exports = {
         }
 
     },
-    crawlDepthFirstHelper: function(url, searchDepth, keyword) {
-        var crawlRes = this.crawlDepthFirst(url, searchDepth, 0, keyword);
+    crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
+        var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
         return crawlRes;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
@@ -59,6 +59,7 @@ module.exports = {
         var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
         return crawlRes;
     },
+
     crawlBreadthFirst: async function(url, searchDepth, currentDepth, keyword) {
         return await puppeteer.launch()
             .then(async browser => {
