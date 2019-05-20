@@ -24,7 +24,9 @@ module.exports = {
         return crawlRes;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
-        return puppeteer.launch()
+        return puppeteer.launch({
+            'args': ['--no-sandbox', '--disable-setuid-sandbox']
+        })
             .then(async browser => {
                 var page = await initBrowser(browser);
                 var htmlObj = await navigateUrl(page, url);

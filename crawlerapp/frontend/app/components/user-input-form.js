@@ -1,19 +1,22 @@
 import Component from '@ember/component';
 import { inject as service } from '@ember/service';
+import $ from 'jquery';
 
 export default Component.extend({
+
+    init() {
+        this._super(...arguments);
+        this.set('url', 'https://');
+        $('#bfs-radio').show();
+    },
 
     store: service(),
     router: service(),
 
     searchMethod: 'bfs', //default to breadth first search
 
-
     actions: {
         submitForm(){
-
-            //some sort of validation
-
             let searchRequest = this.store.createRecord('search-request', {
                 url: this.get('url'),
                 searchMethod: this.searchMethod,
@@ -25,19 +28,28 @@ export default Component.extend({
             // eslint-disable-next-line no-console
             console.log(searchRequest.id);
 
-            this.set('url', '');
-            this.set('searchMethod', 'bfs');
+            this.set('url', 'https://');
             this.set('depth', '');
             this.set('keyword', '');
 
             this.get('router').transitionTo('/dashboard/search/' + searchRequest.id);
         },
-
-        //To Do: Data down, actions up 
-        //https://dockyard.com/blog/2015/10/14/best-practices-data-down-actions-up 
-
         methodChanged(value){
+            if (value === 'dfs') {
+                $('#dfs-radio').show();
+                $('#bfs-radio').hide();
+                $('#search-depth').attr({"max": "10"});
+            } else {
+                $('#bfs-radio').show();
+                $('#dfs-radio').hide();
+                $('#search-depth').attr({"max": "3"});
+            }
             this.set('searchMethod', value);
+        },
+        clearForm() {
+            this.set('url', 'https://');
+            this.set('depth', '');
+            this.set('keyword', '');
         }
     }
 });

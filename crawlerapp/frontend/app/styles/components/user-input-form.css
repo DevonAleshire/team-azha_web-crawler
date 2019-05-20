@@ -1,5 +1,82 @@
 .form-container {
-    width: 50%;
-    margin-left: 25%;
+    width: 25%;
+    margin: 50px auto;
     padding: 2%;
+    background-color: white;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+
+.inline-form-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.form-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 2%;
+}
+.radio-buttons {
+    display: flex;
+}
+.radio-button-div {
+    width: 100%;
+}
+.button-div {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.input-field {
+    margin-top: 0px;
+}
+
+.input-field.col label {
+    left: 0px;
+}
+
+.input-field>label {
+    position: inherit;
+}
+
+.search-depth-radio{
+    margin-left: 5%; 
+    color: #26A69A 
+}
+#dfs-radio {
+    display: none;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active  {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+}
+
+@media screen and (min-width: 1825px) {
+    .form-container {
+        width: 25%;
+    }
+}@media screen and (max-width: 1824px) {
+    .form-container {
+        width: 40%;
+    }
+}
+@media screen and (max-width: 1025px) {
+    .form-container {
+        width: 55%;
+    }
+}
+@media screen and (max-width: 768px) {
+    .form-container {
+        width: 80%;
+    }
+}
+@media screen and (max-width: 480px) {
+    .form-container {
+        width: 95%;
+    }
 }
