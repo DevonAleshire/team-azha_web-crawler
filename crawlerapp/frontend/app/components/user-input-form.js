@@ -21,7 +21,7 @@ export default Component.extend({
                 url: this.get('url'),
                 searchMethod: this.searchMethod,
                 depth: this.get('depth'),
-                keyword: this.get('keyword')
+                keyword: this.get('keyword'),
             });
 
             searchRequest.save();

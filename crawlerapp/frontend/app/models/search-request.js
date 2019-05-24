@@ -4,5 +4,5 @@ export default DS.Model.extend({
     url: DS.attr('string'),
     searchMethod: DS.attr('string'),
     depth: DS.attr('number'),
-    keyword: DS.attr('string')
+    keyword: DS.attr('string'),
 });
