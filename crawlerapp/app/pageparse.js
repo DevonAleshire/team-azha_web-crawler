@@ -21,6 +21,7 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
         var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log(crawlRes);
         return crawlRes;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
@@ -192,7 +193,7 @@ async function navigateUrl (page, url) {
             return htmlObj;
         } else {
             await delay(delayMs);       //Observe robots crawl delay
-            return await page.goto(url, {waitUntil: 'load', timeout: 3000}).then(function() {
+            return await page.goto(url, {waitUntil: 'load', timeout: 10000}).then(function() {
                 htmlObj.push(page.url());
                 return page.evaluate(() => document.body.innerHTML).then(async function(res) {
                     var frames = page.frames();
