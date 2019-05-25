@@ -1,47 +1,13 @@
-{{user-input-form model=model transitionInComponent=(action "transitionInController")}}
-
-<div class="lower-components">
-    <div class="history-component">
-        <table>
-            <tr>
-                <th>URL</th>
-                <th>Search Method</th>
-                <th>Depth</th>
-                <th>Keyword</th>
-                <th>Repeat Search</th>
-                <th>Delete</th>
-            </tr>
-        {{#each model as |request|}}
-            <tr>
-                <td>{{request.url}}</td>
-                <td>{{request.searchMethod}}</td>
-                <td>{{request.depth}}</td>
-                <td>{{request.keyword}}</td>
-                <td>
-                    <a {{action "repeatSearch" request.id}} class="btn-floating btn-medium waves-effect waves-light blue"><i class="material-icons">youtube_searched_for</i></a>
-                </td>
-                <td>
-                    <a {{action "deleteSearch" request.id}} class="btn-floating btn-medium waves-effect waves-light red"><i class="material-icons">clear</i></a>
-                </td>
-            </tr>
-        {{/each}}
-        </table>
-    </div>
-
-
-<div class='show-loading loading-spinner' style="display: none;">
-      <div class="preloader-wrapper big active">
-    <div class="spinner-layer spinner-blue-only">
-      <div class="circle-clipper left">
-        <div class="circle"></div>
-      </div><div class="gap-patch">
-        <div class="circle"></div>
-      </div><div class="circle-clipper right">
-        <div class="circle"></div>
-      </div>
-    </div>
+<div class="upper-components">
+  <div class="history-component">
+    {{search-history model=model}}
+  </div>
+  <div class="form-component">
+    {{user-input-form model=model}}
   </div>
 </div>
-{{outlet}}
-
+<div class="lower-components">
+  <h1>Data Visulization</h1>  
+  <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+  {{outlet}}
 </div>

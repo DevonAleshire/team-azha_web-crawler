@@ -5,7 +5,7 @@ import $ from 'jquery'
 export default Route.extend({
 
     beforeModel(){
-        $('.show-loading').show();
+        $('.lds-roller').show();
     },
 
     model(params){
@@ -24,9 +24,9 @@ export default Route.extend({
              return fetch(apiUrl)
                 .then(res => res.json())
                 .then((data) => {
-                    console.log(data);
+                    console.log('data', data);
                     return data
-                }); 
+                }).catch((e) => console.log('Failed to retreive data from BE: ', e)); 
         };
         const returnData = formParams.then(record => record.data)
                   .then((data) => makeApiCall(data)); 
@@ -37,7 +37,7 @@ export default Route.extend({
     },
 
     afterModel(){
-        $('.show-loading').hide();
+        $('.lds-roller').hide();
     }
 
 
