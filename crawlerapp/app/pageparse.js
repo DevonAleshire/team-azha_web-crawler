@@ -25,17 +25,20 @@ module.exports = {
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
         return puppeteer.launch({
-            'args': ['--no-sandbox', '--disable-setuid-sandbox']
+            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*'],
+            timeout: 10000,
+            ignoreHTTPSErrors: true,
+            headless: true
         })
             .then(async browser => {
                 var page = await initBrowser(browser);
+                await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36");
                 var htmlObj = await navigateUrl(page, url);
                 browser.close();    //close now to save memory
-
+                
                 var newDepth = currentDepth + 1;
                 var crawlRes = {"url": url,
                         "depth": currentDepth};
-
                 var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                 crawlRes.links = urls;
 
@@ -121,6 +124,7 @@ module.exports = {
     getPage: function (url) {
         return puppeteer.launch()
             .then(async browser => {
+
                 var page = await initBrowser(browser);
                 var html = await navigateUrl(page, url);
                 browser.close();    //close now to save memory
@@ -146,7 +150,7 @@ function urlIsValid (testUrl) {
 };
 
 function parseHtml (url, html) {
-    try {        
+    try {
         //Iterate through each <a> tag
         var urlList = [];
         cheerio('a', html).each(function() {
@@ -179,7 +183,7 @@ function parseHtml (url, html) {
 async function navigateUrl (page, url) {
     try {
         var urlObj = new processUrl.URL(url);
-
+        
         var robots = robotsParser(urlObj.origin + '/robots.txt', '*');
         var delayMs = robots.getCrawlDelay('*') == undefined ? 0 : robots.getCrawlDelay('*');
         var isAllowed = robots.isAllowed(url, '*');
@@ -192,7 +196,7 @@ async function navigateUrl (page, url) {
             return htmlObj;
         } else {
             await delay(delayMs);       //Observe robots crawl delay
-            return await page.goto(url, {waitUntil: 'load', timeout: 3000}).then(function() {
+            return await page.goto(url, timeout = 10000).then(function() {
                 htmlObj.push(page.url());
                 return page.evaluate(() => document.body.innerHTML).then(async function(res) {
                     var frames = page.frames();
@@ -200,7 +204,6 @@ async function navigateUrl (page, url) {
                         var foo = await frames[frame].content();
                         res = res + foo;
                     }
-
                     htmlObj.push(res);
                     htmlObj.push('allowed');
                     return htmlObj;
@@ -209,16 +212,18 @@ async function navigateUrl (page, url) {
                 if (err.name == "TimeoutError") {
                     htmlObj.push([]);
                     htmlObj.push(err.name);
+                    return htmlObj;
                 } else {
                     htmlObj.push([]);
                     htmlObj.push('NavigationError');
+                    return htmlObj;
                 }
             });
         }
     } catch (err) {
-        console.log(url);
-        console.log(err);
-        return;
+        htmlObj.push([]);
+        htmlObj.push('NavigationError');
+        return htmlObj;
     }
 }
 
