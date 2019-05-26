@@ -1,0 +1,65 @@
+.history-component {
+    margin-top: 50px;
+    flex-basis:  45%;
+    overflow-y: scroll;
+    max-height: 400px;
+    font-size: 1.2em;
+}
+
+.history-header {
+   padding: 3% 0 3% 25px;
+   background-color: white;
+   font-size: 1.3em;
+   font-family: 'Abel', sans-serif;
+}
+
+.history-more-info {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    text-align: center;
+    padding: 0 25px 10px 25px;
+    background: white;  
+}
+
+.history-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+
+}
+
+.section-title {
+    color: #4CA1AF;
+}
+
+.list-item {
+    margin-bottom: 15px;
+    -webkit-box-shadow: 0 10px 6px -6px #777;
+    -moz-box-shadow: 0 10px 6px -6px #777;
+    box-shadow: 0 10px 6px -6px #777;
+}
+
+.list-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.second-button {
+    margin-top: 8px;
+}
+
+@media screen and (max-width: 1000px) {
+    .history-component{
+        flex-basis: 80%;
+    }
+}
+@media screen and (max-width: 480px) {
+    .history-component {
+        flex-basis: 95%;
+    }
+    .btn {
+        padding: 0 5px;
+    }
+}
