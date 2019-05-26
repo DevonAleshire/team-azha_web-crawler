@@ -1,6 +1,7 @@
 @import 'components/user-input-form.css';
 @import 'components/nav-bar.css';
 @import 'components/search-history.css';
+@import 'components/d3-visualization.css';
 
 .upper-components {
     display: flex;
