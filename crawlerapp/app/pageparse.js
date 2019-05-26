@@ -8,10 +8,12 @@ var robotsParser = require('robots-parser');
 
 var bfsKeyword = false;
 var bfsVisited = {};
+var data = { nodes: [], links: [] }
 
 module.exports = {
 
     searchHelper: function(url, searchType, searchDepth, keyword) {
+         data = { nodes: [], links: [] }
         if (searchType == "dfs") {
             return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
@@ -21,7 +23,8 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
         var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
-        return crawlRes;
+        //TODO: Update to use data structure
+        return data;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
         return puppeteer.launch({
@@ -39,6 +42,7 @@ module.exports = {
                 var newDepth = currentDepth + 1;
                 var crawlRes = {"url": url,
                         "depth": currentDepth};
+                            
                 var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                 crawlRes.links = urls;
 
@@ -48,8 +52,15 @@ module.exports = {
                 crawlRes.destinationState = htmlObj[2];
 
                 var chosenUrl = await chooseRandomUrl(urls);
-
+                
+                //Add data for visualization
+                //Use ES6 SET ?
+                console.log("Url: ", url);
+                data.nodes.push({id: url});
+                
                 if (currentDepth < searchDepth && found == false) {
+                    console.log("Chosen Url: ", url);
+                    data.links.push({source: url, target: chosenUrl})
                     crawlRes.links[chosenUrl] = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
                     return crawlRes;
                 } else {
