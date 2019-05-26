@@ -5,27 +5,29 @@ var processUrl = require('url');
 var request = require('request');
 var mime = require('mime');
 var robotsParser = require('robots-parser');
+var bluebird = require('bluebird');
 
 var bfsKeyword = false;
 var bfsVisited = {};
 
 module.exports = {
 
-    searchHelper: function(url, searchType, searchDepth, keyword) {
+    searchHelper: async function(url, searchType, searchDepth, keyword) {
+        process.setMaxListeners(Infinity);
         if (searchType == "dfs") {
-            return this.crawlDepthFirstHelper(url, searchDepth, keyword);
+            return JSON.stringify(this.crawlDepthFirstHelper(url, searchDepth, keyword));
         } else {
-            return this.crawlBreadthFirstHelper(url, searchDepth, keyword);
+            return await JSON.stringify(this.crawlBreadthFirstHelper(url, searchDepth, keyword));
         }
-
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
         var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log(crawlRes);
         return crawlRes;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
         return puppeteer.launch({
-            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*'],
+            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito'],
             timeout: 10000,
             ignoreHTTPSErrors: true,
             headless: true
@@ -39,6 +41,13 @@ module.exports = {
                 var newDepth = currentDepth + 1;
                 var crawlRes = {"url": url,
                         "depth": currentDepth};
+
+                if (htmlObj[0].length == 0) {
+                    crawlRes.links = [];
+                    crawlRes.keywordFound = false;
+                    return crawlRes;
+                }
+
                 var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                 crawlRes.links = urls;
 
@@ -60,13 +69,20 @@ module.exports = {
                 console.log(err);
             });
     },
-    crawlBreadthFirstHelper: function(url, searchDepth, keyword) {
-        var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
+    crawlBreadthFirstHelper: async function(url, searchDepth, keyword) {
+        bfsKeyword = false;
+        bfsVisited = {};
+        var crawlRes = await this.crawlBreadthFirst(url, searchDepth, 0, keyword);
+        console.log(crawlRes);
         return crawlRes;
     },
-
     crawlBreadthFirst: async function(url, searchDepth, currentDepth, keyword) {
-        return await puppeteer.launch()
+        return await puppeteer.launch({
+            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito'],
+            timeout: 10000,
+            ignoreHTTPSErrors: true,
+            headless: true
+        })
             .then(async browser => {
                 //console.log(bfsVisited);
                 var newDepth = currentDepth + 1;
@@ -82,6 +98,12 @@ module.exports = {
                     var htmlObj = await navigateUrl(page, url)
                     browser.close();    //close now to save memory
 
+                    if (htmlObj[0].length == 0) {
+                        crawlRes.links = [];
+                        crawlRes.keywordFound = false;
+                        return crawlRes;
+                    }
+
                     var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                     crawlRes.links = urls;
 
@@ -94,21 +116,20 @@ module.exports = {
                     crawlRes.destinationState = htmlObj[2];
 
                     bfsVisited[url] = true;
-
                     if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
-                        for (var i = 0; i < crawlRes.links.length; i++) {
-                            var nextUrl = crawlRes.links[i];
-                            if (bfsVisited[nextUrl] == true) {
-                                crawlRes.links[i] = {"url": nextUrl,
+                        return await bluebird.map(crawlRes.links, async function (link) {
+                            if (bfsVisited[link] == true) {
+                                return {"url": link,
                                     "depth": newDepth,
                                     "visited": true};
                             } else {
-                                console.log("calling!!!!");
-                                console.log(crawlRes.links[i]);
-                                crawlRes.links[i] = await this.crawlBreadthFirst(crawlRes.links[i], searchDepth, newDepth, keyword);
+                                console.log("calling " + link);
+                                return await crawlBreadthFirstLocal(link, searchDepth, newDepth, keyword);
                             }
-                        }
-                        return crawlRes;
+                        }, {concurrency: 5}).then(function (result) {
+                            crawlRes.links = result;
+                            return crawlRes;
+                        });
                     } else {
                         return crawlRes;
                     }
@@ -250,7 +271,6 @@ function chooseRandomUrl (urls) {
     try {
         //Choose a random Url from the deduplicated array
         var randNum = Math.random();
-        //var keys = Object.keys(urls);
         var nextUrl = urls[Math.floor(randNum * urls.length)];
 
         return nextUrl;
@@ -295,3 +315,67 @@ function getPage(url) {
 
 //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
 const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function crawlBreadthFirstLocal(url, searchDepth, currentDepth, keyword) {
+    return await puppeteer.launch({
+        'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito'],
+        timeout: 10000,
+        ignoreHTTPSErrors: true,
+        headless: true
+    })
+        .then(async browser => {
+            var newDepth = currentDepth + 1;
+            var crawlRes = {"url": url,
+                    "depth": currentDepth};
+
+            if (bfsVisited[url] == true) {
+                crawlRes.visited = true;
+                browser.close();
+                return crawlRes;
+            } else {
+                var page = await initBrowser(browser);
+                var htmlObj = await navigateUrl(page, url)
+                browser.close();    //close now to save memory
+
+                if (htmlObj[0].length == 0) {
+                    crawlRes.links = [];
+                    crawlRes.keywordFound = false;
+                    return crawlRes;
+                }
+
+                var urls = await parseHtml(htmlObj[0], htmlObj[1]);
+                crawlRes.links = urls;
+
+                var found = findKeyword(htmlObj[1], keyword);
+                if (found) {
+                    bfsKeyword = true;
+                }
+                crawlRes.keywordFound = found;
+
+                crawlRes.destinationState = htmlObj[2];
+
+                bfsVisited[url] = true;
+                if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
+                    return await bluebird.map(crawlRes.links, async function (link) {
+                        if (bfsVisited[link] == true) {
+                            return {"url": link,
+                                "depth": newDepth,
+                                "visited": true};
+                        } else {
+                            console.log("calling!!!!");
+                            console.log(link);
+                            return await crawlBreadthFirstLocal(link, searchDepth, newDepth, keyword);
+                        }
+                    }, {concurrency: 3}).then(function (result) {
+                        crawlRes.links = result;
+                        return crawlRes;
+                    });
+                } else {
+                    return crawlRes;
+                }
+            }
+        })
+        .catch(function(err) {
+            console.log(err);
+        });
+}
