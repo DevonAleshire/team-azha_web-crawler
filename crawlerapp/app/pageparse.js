@@ -5,35 +5,35 @@ var processUrl = require('url');
 var request = require('request');
 var mime = require('mime');
 var robotsParser = require('robots-parser');
+var bluebird = require('bluebird');
 
 var bfsKeyword = false;
 var bfsVisited = {};
-var data = { nodes: [], links: [] }
 
 module.exports = {
 
-    searchHelper: function(url, searchType, searchDepth, keyword) {
-         data = { nodes: [], links: [] }
+    searchHelper: async function(url, searchType, searchDepth, keyword) {
+        process.setMaxListeners(Infinity);
         if (searchType == "dfs") {
             return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
-            return this.crawlBreadthFirstHelper(url, searchDepth, keyword);
+            return await this.crawlBreadthFirstHelper(url, searchDepth, keyword);
         }
-
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
-        var crawlRes = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
-        //TODO: Update to use data structure
+        var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log(data);
         return data;
     },
     crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
         return puppeteer.launch({
-            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*'],
+            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito'],
             timeout: 10000,
             ignoreHTTPSErrors: true,
             headless: true
         })
             .then(async browser => {
+                var data = { nodes: [], links: [] };
                 var page = await initBrowser(browser);
                 await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36");
                 var htmlObj = await navigateUrl(page, url);
@@ -42,7 +42,14 @@ module.exports = {
                 var newDepth = currentDepth + 1;
                 var crawlRes = {"url": url,
                         "depth": currentDepth};
-                            
+
+                if (htmlObj[0].length == 0) {
+                    //crawlRes.links = [];
+                    //crawlRes.keywordFound = false;
+                    data.nodes.push({id: url});
+                    return data;
+                }
+
                 var urls = await parseHtml(htmlObj[0], htmlObj[1]);
                 crawlRes.links = urls;
 
@@ -52,85 +59,36 @@ module.exports = {
                 crawlRes.destinationState = htmlObj[2];
 
                 var chosenUrl = await chooseRandomUrl(urls);
-                
+
                 //Add data for visualization
                 //Use ES6 SET ?
-                console.log("Url: ", url);
-                data.nodes.push({id: url});
-                
+                // console.log("Url: ", url);
+                // data.nodes.push({id: url});
+
                 if (currentDepth < searchDepth && found == false) {
-                    console.log("Chosen Url: ", url);
-                    data.links.push({source: url, target: chosenUrl})
-                    crawlRes.links[chosenUrl] = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
-                    return crawlRes;
+                    data.nodes.push({id: url});
+                    data.links.push({source: url, target: chosenUrl});
+                    var res = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
+                    data.nodes = [...new Set(data.nodes.concat(...res.nodes))];
+                    data.links = [...new Set(data.links.concat(...res.links))];
+                    return data;
                 } else {
-                    return crawlRes;
+                    data.nodes.push({id: url});
+                    data.links.push({source: url, target: chosenUrl});
+                    return data;
                 }
             })
             .catch(function(err) {
                 console.log(err);
             });
     },
-    crawlBreadthFirstHelper: function(url, searchDepth, keyword) {
-        var crawlRes = this.crawlBreadthFirst(url, searchDepth, 0, keyword);
-        return crawlRes;
-    },
-
-    crawlBreadthFirst: async function(url, searchDepth, currentDepth, keyword) {
-        return await puppeteer.launch()
-            .then(async browser => {
-                //console.log(bfsVisited);
-                var newDepth = currentDepth + 1;
-                var crawlRes = {"url": url,
-                        "depth": currentDepth};
-
-                if (bfsVisited[url] == true) {
-                    crawlRes.visited = true;
-                    browser.close();
-                    return crawlRes;
-                } else {
-                    var page = await initBrowser(browser);
-                    var htmlObj = await navigateUrl(page, url)
-                    browser.close();    //close now to save memory
-
-                    var urls = await parseHtml(htmlObj[0], htmlObj[1]);
-                    crawlRes.links = urls;
-
-                    var found = findKeyword(htmlObj[1], keyword);
-                    if (found) {
-                        bfsKeyword = true;
-                    }
-                    crawlRes.keywordFound = found;
-
-                    crawlRes.destinationState = htmlObj[2];
-
-                    bfsVisited[url] = true;
-
-                    if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
-                        for (var i = 0; i < crawlRes.links.length; i++) {
-                            var nextUrl = crawlRes.links[i];
-                            if (bfsVisited[nextUrl] == true) {
-                                crawlRes.links[i] = {"url": nextUrl,
-                                    "depth": newDepth,
-                                    "visited": true};
-                            } else {
-                                console.log("calling!!!!");
-                                console.log(crawlRes.links[i]);
-                                crawlRes.links[i] = await this.crawlBreadthFirst(crawlRes.links[i], searchDepth, newDepth, keyword);
-                            }
-                        }
-                        return crawlRes;
-                    } else {
-                        return crawlRes;
-                    }
-                }
-            })
-            .catch(function(err) {
-                console.log(err);
-            });
-    },
-    dataTransform: function() {
-
+    crawlBreadthFirstHelper: async function(url, searchDepth, keyword) {
+        bfsKeyword = false;
+        bfsVisited = {};
+        var data = await crawlBreadthFirst(url, searchDepth, 0, keyword);
+        //console.log("HELPER");
+        console.log(data);
+        return data;
     },
     getPage: function (url) {
         return puppeteer.launch()
@@ -207,7 +165,9 @@ async function navigateUrl (page, url) {
             return htmlObj;
         } else {
             await delay(delayMs);       //Observe robots crawl delay
-            return await page.goto(url, timeout = 10000).then(function() {
+            return await page.goto(url, {/*waitUntil: 'networkidle'/*,*/ timeout: 5000}).then(async function() {
+                //await page.waitForNavigation();
+
                 htmlObj.push(page.url());
                 return page.evaluate(() => document.body.innerHTML).then(async function(res) {
                     var frames = page.frames();
@@ -261,7 +221,6 @@ function chooseRandomUrl (urls) {
     try {
         //Choose a random Url from the deduplicated array
         var randNum = Math.random();
-        //var keys = Object.keys(urls);
         var nextUrl = urls[Math.floor(randNum * urls.length)];
 
         return nextUrl;
@@ -306,3 +265,98 @@ function getPage(url) {
 
 //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
 const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
+    return await puppeteer.launch({
+        'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito', '--deterministic-fetch'],
+        timeout: 10000,
+        ignoreHTTPSErrors: true,
+        headless: true
+    })
+        .then(async browser => {
+            var data = { nodes: [], links: [] };
+
+            var newDepth = currentDepth + 1;
+            var crawlRes = {"url": url,
+                    "depth": currentDepth};
+
+            if (bfsVisited[url] == true) {
+                crawlRes.visited = true;
+                browser.close();
+                data.nodes.push({id: url});
+                return data;
+            } else {
+                var page = await initBrowser(browser);
+                await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36");
+                var htmlObj = await navigateUrl(page, url)
+                browser.close();    //close now to save memory
+
+                if (htmlObj[0].length == 0) {
+                    crawlRes.links = [];
+                    crawlRes.keywordFound = false;
+                    data.nodes.push({id: url});
+                    return data;
+                }
+
+                var urls = await parseHtml(htmlObj[0], htmlObj[1]);
+                crawlRes.links = urls;
+
+                data.nodes.push({id: url});
+                for (each in urls) {
+                    data.links.push({source: url, target: urls[each]});
+                } 
+
+                var found = findKeyword(htmlObj[1], keyword);
+                if (found) {
+                    bfsKeyword = true;
+                }
+                crawlRes.keywordFound = found;
+
+                crawlRes.destinationState = htmlObj[2];
+
+                bfsVisited[url] = true;
+                if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
+                    let batches = [];
+
+                    while(crawlRes.links.length) {
+                        batches.push(crawlRes.links.splice(0, 10));
+                    }
+
+                    for (each in batches) {
+                        //console.log("EACH");
+                        //console.log(batches[each]);
+
+                        var toReturn = await Promise.all(batches[each].map(async function(link){
+                            if (bfsVisited[link] == true) {
+                                return data;
+                            } else {
+                                console.log("calling " + link);
+                                return await crawlBreadthFirst(link, searchDepth, newDepth, keyword);
+                            }
+                        }))
+                        .then(await function (data, res) {
+                            for (each in res) {
+                                data.nodes = [...new Set(data.nodes.concat(...res[each].nodes))];
+                                data.links = [...new Set(data.links.concat(...res[each].links))];
+                            }
+                            return data;
+                        }).catch(err => {
+                            console.log(err);
+                        });
+                        //console.log(toReturn);
+                        for (each in toReturn) {
+                            data.nodes = [...new Set(data.nodes.concat(...toReturn[each].nodes))];
+                            data.links = [...new Set(data.links.concat(...toReturn[each].links))];
+                        }
+                       
+                    }
+                    return data;
+                } else {
+                    return data;
+                }
+            }
+        })
+        .catch(function(err) {
+            console.log(err);
+        });
+}
