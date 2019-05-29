@@ -1,14 +1,10 @@
 var cheerio = require('cheerio');
-var puppeteer = require('puppeteer');
 var validUrl = require('valid-url');
 var processUrl = require('url');
 var request = require('request');
+var rp = require('request-promise-native');
 var mime = require('mime');
 var robotsParser = require('robots-parser');
-var bluebird = require('bluebird');
-
-var bfsKeyword = false;
-var bfsVisited = {};
 
 module.exports = {
 
@@ -22,99 +18,58 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
-        console.log(data);
         return data;
     },
-    crawlDepthFirst: function(url, searchDepth, currentDepth, keyword) {
-        return puppeteer.launch({
-            'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito'],
-            timeout: 10000,
-            ignoreHTTPSErrors: true,
-            headless: true
-        })
-            .then(async browser => {
-                var data = { nodes: [], links: [] };
-                var page = await initBrowser(browser);
-                await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36");
-                var htmlObj = await navigateUrl(page, url);
-                browser.close();    //close now to save memory
-                
-                var newDepth = currentDepth + 1;
-                var crawlRes = {"url": url,
-                        "depth": currentDepth};
+    crawlDepthFirst: async function(url, searchDepth, currentDepth, keyword) {
+        var urlStack = [];
+        var visited = {};
+        urlStack.push(new processUrl.URL(url).href);
 
-                if (htmlObj[0].length == 0) {
-                    //crawlRes.links = [];
-                    //crawlRes.keywordFound = false;
-                    data.nodes.push({id: url});
-                    return data;
-                }
+        var found = false;
+        var newDepth = currentDepth;
 
-                var urls = await parseHtml(htmlObj[0], htmlObj[1]);
-                crawlRes.links = urls;
+        var data = { nodes: [], links: [] };
 
-                var found = findKeyword(htmlObj[1], keyword);
-                crawlRes.keywordFound = found;
-
-                crawlRes.destinationState = htmlObj[2];
-
-                var chosenUrl = await chooseRandomUrl(urls);
-
-                //Add data for visualization
-                //Use ES6 SET ?
-                // console.log("Url: ", url);
-                // data.nodes.push({id: url});
-
-                if (currentDepth < searchDepth && found == false) {
-                    data.nodes.push({id: url});
-                    data.links.push({source: url, target: chosenUrl});
-                    var res = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
-                    data.nodes = [...new Set(data.nodes.concat(...res.nodes))];
-                    data.links = [...new Set(data.links.concat(...res.links))];
-                    return data;
-                } else {
-                    data.nodes.push({id: url});
-                    data.links.push({source: url, target: chosenUrl});
-                    return data;
-                }
-            })
-            .catch(function(err) {
+        for (var i = 0; i < searchDepth ; i++) {
+            var nextUrl = urlStack.pop();
+            var linkObj = {};
+            if (newDepth > searchDepth || found == true) {
+                console.log("EARLY");
+                return data;
+            } else {
+                linkObj = {"url":nextUrl, "depth":newDepth};
+                data.nodes.push({id: nextUrl});
+                visited[nextUrl] = true;
+            }
+            
+            var navObj = await getPage(linkObj, keyword)
+            .then(await function (res) {return res;})
+            .catch(err => {
                 console.log(err);
             });
+
+            var randomUrl = await chooseRandomUrl(navObj.urls, visited);
+
+            if (randomUrl == "") {
+                //No valid random URL found
+                return data;
+            } else {
+                urlStack.push(randomUrl);
+                newDepth = newDepth + 1;
+            }
+            
+            data.links.push({source: navObj.linkObj.url, target: randomUrl});
+
+            found = navObj.found;
+        }
+        //console.log(data);
+        return data;
     },
     crawlBreadthFirstHelper: async function(url, searchDepth, keyword) {
         bfsKeyword = false;
         bfsVisited = {};
         var data = await crawlBreadthFirst(url, searchDepth, 0, keyword);
-        //console.log("HELPER");
-        console.log(data);
         return data;
-    },
-    getPage: function (url) {
-        return puppeteer.launch()
-            .then(async browser => {
-
-                var page = await initBrowser(browser);
-                var html = await navigateUrl(page, url);
-                browser.close();    //close now to save memory
-
-                return html;
-        })
-        .catch(function(err) {
-            console.log(err);
-        });
-    }
-};
-
-function urlIsValid (testUrl) {
-    try {
-        new processUrl.URL(testUrl);
-        console.log("VALID URL\n"); 
-        return true;
-    } catch (err) {
-        console.log(err)
-        console.log("INVALID URL: format error\n"); 
-        return false;
     }
 };
 
@@ -130,10 +85,15 @@ function parseHtml (url, html) {
             //Some a tags do not have an href property and will resolve as undefined
             if (nextUrl != undefined) {
                 //Prepend to relative path if protocol and domain info are missing
-                cleanUrl = new processUrl.URL(nextUrl, url).href;
+                var isValid = false;
+                try {
+                    cleanUrl = new processUrl.URL(nextUrl, url).href;
+                    isValid = validUrl.isWebUri(cleanUrl);
+                } catch (err) {
+                    isValid = false;
+                }
                 
                 var mimeType = mime.getType(cleanUrl);
-                var isValid = validUrl.isWebUri(cleanUrl);
 
                 //Check the mime type of the destination, only push html or potential html destinations
                 //The isValid check will filter out mailto and script links
@@ -149,61 +109,47 @@ function parseHtml (url, html) {
     }
 }
 
-async function navigateUrl (page, url) {
+async function navigateUrl (url) {
     try {
         var urlObj = new processUrl.URL(url);
         
         var robots = robotsParser(urlObj.origin + '/robots.txt', '*');
         var delayMs = robots.getCrawlDelay('*') == undefined ? 0 : robots.getCrawlDelay('*');
         var isAllowed = robots.isAllowed(url, '*');
-        var htmlObj = [];
+        var htmlObj = {};
+        htmlObj["url"] = url;
+        htmlObj["html"] = "";
 
         if (!isAllowed) {       //Observe robots exclusion
-            htmlObj.push(url);
-            htmlObj.push([]);
-            htmlObj.push('disallowed');
+            htmlObj["status"] = "disallowed";
             return htmlObj;
         } else {
+            var options = {
+                uri: url
+                ,'headers': {
+                    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
+                }
+                ,'timeout': 5000
+            };
             await delay(delayMs);       //Observe robots crawl delay
-            return await page.goto(url, {/*waitUntil: 'networkidle'/*,*/ timeout: 5000}).then(async function() {
-                //await page.waitForNavigation();
-
-                htmlObj.push(page.url());
-                return page.evaluate(() => document.body.innerHTML).then(async function(res) {
-                    var frames = page.frames();
-                    for (frame in frames) {
-                        var foo = await frames[frame].content();
-                        res = res + foo;
-                    }
-                    htmlObj.push(res);
-                    htmlObj.push('allowed');
-                    return htmlObj;
-                });
+            return await rp(options).then(async function(htmlString) {
+                //console.log(htmlString);
+                htmlObj["html"] = htmlString;
+                htmlObj["status"] = "allowed";
+                return htmlObj;
             }).catch((err) => {
                 if (err.name == "TimeoutError") {
-                    htmlObj.push([]);
-                    htmlObj.push(err.name);
+                    htmlObj["status"] = err.name;
                     return htmlObj;
                 } else {
-                    htmlObj.push([]);
-                    htmlObj.push('NavigationError');
+                    htmlObj["status"] = "NavigationError";
                     return htmlObj;
                 }
             });
         }
     } catch (err) {
-        htmlObj.push([]);
-        htmlObj.push('NavigationError');
+        htmlObj["status"] = "NavigationError";
         return htmlObj;
-    }
-}
-
-function initBrowser (browser) {
-    try {
-        return browser.newPage();
-    } catch (err) {
-        console.log(err);
-        return;
     }
 }
 
@@ -217,16 +163,48 @@ function deDuplicateUrls (urlArr) {
     }
 }
 
-function chooseRandomUrl (urls) {
+async function chooseRandomUrl (urls, visited) {
     try {
-        //Choose a random Url from the deduplicated array
-        var randNum = Math.random();
-        var nextUrl = urls[Math.floor(randNum * urls.length)];
+        var randomUrl = "";
 
-        return nextUrl;
+        //If there are no URLS return an empty string
+        if (urls.length == 0) { return randomUrl };
+        
+        var chosen = false;
+        var tryCount = 0;
+        while (!chosen && tryCount < 5) {
+            tryCount = tryCount + 1;    //Prevent an infinite loop, only try to find unique URL 5 times
+
+            //Choose a random Url from the deduplicated array
+            var randNum = Math.random();
+            var nextUrl = urls[Math.floor(randNum * urls.length)];
+
+            //Don't get the body, just the header and test it for text/html
+            var options = {
+                uri: nextUrl
+                ,'headers': {
+                    'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
+                }
+                ,'timeout': 5000
+            };
+            var isHtml = await rp.head(options)
+            .then(async function(res) {
+                return res['content-type'].includes('text/html');
+            }).catch((err) => {
+                //console.log(err);
+                console.log(nextUrl + "FAILED GET HEAD");
+                return false;
+            });
+
+            if (visited[nextUrl] == undefined && isHtml) {
+                chosen = true;
+                randomUrl = nextUrl;
+            }
+        }
+        return randomUrl;
     } catch (err) {
         console.log(err);
-        return;
+        return "";
     }
 }
 
@@ -249,114 +227,73 @@ function findKeyword(html, keyword) {
     return found;
 }
 
-function getPage(url) {
-    return puppeteer.launch()
-        .then(async browser => {
-            var page = await initBrowser(browser);
-            var htmlObj = await navigateUrl(page, url);
-            browser.close();    //close now to save memory
+async function getPage(linkObj, keyword) {
+    var htmlObj = await navigateUrl(linkObj.url);
+    var toReturn = {};
 
-            return htmlObj;
-    })
-    .catch(function(err) {
-        console.log(err);
-    });
+    toReturn.urls = await parseHtml(htmlObj.url, htmlObj.html);
+    toReturn.found = findKeyword(htmlObj.html, keyword);
+    toReturn.linkObj = linkObj;
+
+    return toReturn;
 }
 
 //https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
-    return await puppeteer.launch({
-        'args': ['--no-sandbox', '--disable-setuid-sandbox', "--proxy-server='direct://'", '--proxy-bypass-list=*', '--incognito', '--deterministic-fetch'],
-        timeout: 10000,
-        ignoreHTTPSErrors: true,
-        headless: true
-    })
-        .then(async browser => {
-            var data = { nodes: [], links: [] };
+    var urlQueue = [];
+    var depthQueue = [];
+    var visited = {};
 
-            var newDepth = currentDepth + 1;
-            var crawlRes = {"url": url,
-                    "depth": currentDepth};
+    urlQueue.push(new processUrl.URL(url).href);
+    depthQueue.push(currentDepth);
 
-            if (bfsVisited[url] == true) {
-                crawlRes.visited = true;
-                browser.close();
-                data.nodes.push({id: url});
-                return data;
+    var found = false;
+    var newDepth = currentDepth;
+    var depthHit = false;
+    var queueLim = 20;
+
+    var data = { nodes: [], links: [] };
+
+    while (urlQueue.length > 0 && found == false && depthHit == false)
+    {
+        var batch = [];
+        for (var i = 0; i < Math.min(queueLim, urlQueue.length) ; i++) {
+            newDepth = depthQueue.shift();
+            newUrl = urlQueue.shift();
+            if (newDepth > searchDepth) {
+                depthHit = true;
             } else {
-                var page = await initBrowser(browser);
-                await page.setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36");
-                var htmlObj = await navigateUrl(page, url)
-                browser.close();    //close now to save memory
-
-                if (htmlObj[0].length == 0) {
-                    crawlRes.links = [];
-                    crawlRes.keywordFound = false;
-                    data.nodes.push({id: url});
-                    return data;
-                }
-
-                var urls = await parseHtml(htmlObj[0], htmlObj[1]);
-                crawlRes.links = urls;
-
-                data.nodes.push({id: url});
-                for (each in urls) {
-                    data.links.push({source: url, target: urls[each]});
-                } 
-
-                var found = findKeyword(htmlObj[1], keyword);
-                if (found) {
-                    bfsKeyword = true;
-                }
-                crawlRes.keywordFound = found;
-
-                crawlRes.destinationState = htmlObj[2];
-
-                bfsVisited[url] = true;
-                if (bfsKeyword == false && currentDepth < searchDepth && found == false) {
-                    let batches = [];
-
-                    while(crawlRes.links.length) {
-                        batches.push(crawlRes.links.splice(0, 10));
-                    }
-
-                    for (each in batches) {
-                        //console.log("EACH");
-                        //console.log(batches[each]);
-
-                        var toReturn = await Promise.all(batches[each].map(async function(link){
-                            if (bfsVisited[link] == true) {
-                                return data;
-                            } else {
-                                console.log("calling " + link);
-                                return await crawlBreadthFirst(link, searchDepth, newDepth, keyword);
-                            }
-                        }))
-                        .then(await function (data, res) {
-                            for (each in res) {
-                                data.nodes = [...new Set(data.nodes.concat(...res[each].nodes))];
-                                data.links = [...new Set(data.links.concat(...res[each].links))];
-                            }
-                            return data;
-                        }).catch(err => {
-                            console.log(err);
-                        });
-                        //console.log(toReturn);
-                        for (each in toReturn) {
-                            data.nodes = [...new Set(data.nodes.concat(...toReturn[each].nodes))];
-                            data.links = [...new Set(data.links.concat(...toReturn[each].links))];
-                        }
-                       
-                    }
-                    return data;
-                } else {
-                    return data;
-                }
+                batch.push({"url":newUrl, "depth":newDepth});  //linkObj
+                data.nodes.push({id: newUrl});
+                visited[newUrl] = true;
             }
-        })
-        .catch(function(err) {
+        }
+
+        var batchRes = await Promise.all(batch.map(async function(linkObj){
+            //console.log("calling " + linkObj.url);
+            return await getPage(linkObj, keyword);
+        }))
+        .then(await function (res) {return res;})
+        .catch(err => {
             console.log(err);
         });
+        for (each in batchRes) {
+            var navObj = batchRes[each];
+            for (url in navObj.urls) {
+                var nextUrl = navObj.urls[url];
+                if (visited[nextUrl] == undefined) {
+                    urlQueue.push(nextUrl);
+                    depthQueue.push(navObj.linkObj.depth + 1);
+                }
+                data.links.push({source: navObj.linkObj.url, target: nextUrl});
+            }
+            if (navObj.found == true) {
+                found = true;
+            }
+        }
+    }
+    //console.log(data);
+    return data;
 }
