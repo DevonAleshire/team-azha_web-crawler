@@ -1,6 +1,6 @@
 import Component from '@ember/component';
 import { select } from 'd3-selection';
-import { forceSimulation, forceCenter, forceManyBody, forceLink } from 'd3-force';
+import { forceSimulation, forceCenter, forceManyBody, forceLink, forceCollide } from 'd3-force';
 import { transition } from 'd3-transition'
 
 export default Component.extend({
@@ -73,7 +73,8 @@ export default Component.extend({
             //Greater negative strength greater the repel force
             .force('charge_force', forceManyBody().strength(-500))
             .force('center_force', forceCenter(960 / 2, 600 / 2))//Drives nodes to center of svg
-        
+            //.force("collisionForce", forceCollide().strength(1));
+
         //Add link-force
         let link_force = forceLink(data.links).id(function (d) { return d.id; });
         //Add forceLink to simulation

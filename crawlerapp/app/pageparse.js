@@ -59,7 +59,7 @@ module.exports = {
                 data.nodes.push({id: url});
                 
                 if (currentDepth < searchDepth && found == false) {
-                    console.log("Chosen Url: ", url);
+                    console.log("Chosen Url: ", chosenUrl);
                     data.links.push({source: url, target: chosenUrl})
                     crawlRes.links[chosenUrl] = await this.crawlDepthFirst(chosenUrl, searchDepth, newDepth, keyword);
                     return crawlRes;
