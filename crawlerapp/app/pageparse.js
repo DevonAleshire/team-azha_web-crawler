@@ -28,8 +28,7 @@ module.exports = {
         var found = false;
         var newDepth = currentDepth;
 
-        //var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
-        var data = { nodes: [], links: [] };
+        var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
         for (var i = 0; i < searchDepth ; i++) {
             var nextUrl = urlStack.pop();
@@ -61,6 +60,10 @@ module.exports = {
             data.links.push({source: navObj.linkObj.url, target: randomUrl});
             data.nodes.push({id: randomUrl});
             found = navObj.found;
+            if (found) {
+                data.keywordFound = true;
+                data.keywordNode = navObj.linkObj.url;
+            }
         }
         data.nodes.push({id: randomUrl});
         //console.log(data);
@@ -255,7 +258,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var depthHit = false;
     var queueLim = 20;
 
-    var data = { nodes: [], links: [] };
+    var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
     while (urlQueue.length > 0 && found == false && depthHit == false)
     {
@@ -292,6 +295,8 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 data.links.push({source: navObj.linkObj.url, target: nextUrl});
             }
             if (navObj.found == true) {
+                data.keywordFound = true;
+                data.keywordNode = navObj.linkObj.url;
                 found = true;
             }
         }
