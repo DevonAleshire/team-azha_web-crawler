@@ -28,13 +28,13 @@ module.exports = {
         var found = false;
         var newDepth = currentDepth;
 
+        //var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
         var data = { nodes: [], links: [] };
 
         for (var i = 0; i < searchDepth ; i++) {
             var nextUrl = urlStack.pop();
             var linkObj = {};
             if (newDepth > searchDepth || found == true) {
-                console.log("EARLY");
                 return data;
             } else {
                 linkObj = {"url":nextUrl, "depth":newDepth};
@@ -59,7 +59,7 @@ module.exports = {
             }
             
             data.links.push({source: navObj.linkObj.url, target: randomUrl});
-
+            data.nodes.push({id: randomUrl});
             found = navObj.found;
         }
         data.nodes.push({id: randomUrl});
@@ -288,6 +288,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     urlQueue.push(nextUrl);
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
+                data.nodes.push({id: nextUrl});
                 data.links.push({source: navObj.linkObj.url, target: nextUrl});
             }
             if (navObj.found == true) {
