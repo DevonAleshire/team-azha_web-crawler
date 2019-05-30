@@ -2,12 +2,8 @@ import Route from '@ember/routing/route';
 import RSVP from 'rsvp';
 import $ from 'jquery'
 
+
 export default Route.extend({
-
-    beforeModel(){
-        $('.lds-roller').show();
-    },
-
     model(params){
         const formParams = this.store.findRecord('search-request', params.id);
 
@@ -35,10 +31,4 @@ export default Route.extend({
             data: returnData,
         });
     },
-
-    afterModel(){
-        $('.lds-roller').hide();
-    }
-
-
 });

@@ -1,0 +1,12 @@
+<div class="search-container">
+    <div class="search-button">
+        {{#link-to 'dashboard'}}
+            <div class="return-button">
+                <a class="waves-effect waves-light btn">Perform Another Search</a>
+            </div>
+        {{/link-to}}  
+    </div>
+    <div class="search-visualization"> 
+        {{d3-visualization model=model.data}}
+    </div>
+</div>

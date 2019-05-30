@@ -62,6 +62,7 @@ module.exports = {
 
             found = navObj.found;
         }
+        data.nodes.push({id: randomUrl});
         //console.log(data);
         return data;
     },
