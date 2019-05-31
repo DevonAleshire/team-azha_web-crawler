@@ -13,7 +13,7 @@ export default Component.extend({
         },
     
         repeatSearch(searchId) {
-            this.get('router').transitionTo('/dashboard/search/' + searchId);
+            this.get('router').transitionTo('/search/' + searchId);
         }
     }
 });
