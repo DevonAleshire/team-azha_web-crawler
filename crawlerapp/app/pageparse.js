@@ -18,10 +18,12 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log(data);
         return data;
     },
     crawlDepthFirst: async function(url, searchDepth, currentDepth, keyword) {
         var urlStack = [];
+        var nodeList = [];
         var visited = {};
         urlStack.push(new processUrl.URL(url).href);
 
@@ -34,10 +36,10 @@ module.exports = {
             var nextUrl = urlStack.pop();
             var linkObj = {};
             if (newDepth > searchDepth || found == true) {
-                return data;
+                break;
             } else {
                 linkObj = {"url":nextUrl, "depth":newDepth};
-                data.nodes.push({id: nextUrl});
+                nodeList.push(nextUrl);
                 visited[nextUrl] = true;
             }
             
@@ -51,21 +53,24 @@ module.exports = {
 
             if (randomUrl == "") {
                 //No valid random URL found
-                return data;
+                break;
             } else {
                 urlStack.push(randomUrl);
                 newDepth = newDepth + 1;
             }
             
             data.links.push({source: navObj.linkObj.url, target: randomUrl});
-            data.nodes.push({id: randomUrl});
+            nodeList.push(randomUrl);
             found = navObj.found;
             if (found) {
                 data.keywordFound = true;
                 data.keywordNode = navObj.linkObj.url;
             }
         }
-        data.nodes.push({id: randomUrl});
+        var uniqueNodes = deDuplicateUrls(nodeList);
+        for (node in uniqueNodes) {
+            data.nodes.push({id: uniqueNodes[node]});
+        }
         //console.log(data);
         return data;
     },
@@ -189,7 +194,7 @@ async function chooseRandomUrl (urls, visited) {
                 ,'headers': {
                     'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
                 }
-                ,'timeout': 5000
+                ,'timeout': 7500
             };
             var isHtml = await rp.head(options)
             .then(async function(res) {
@@ -248,6 +253,7 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var urlQueue = [];
     var depthQueue = [];
+    var nodeList = [];
     var visited = {};
 
     urlQueue.push(new processUrl.URL(url).href);
@@ -270,7 +276,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 depthHit = true;
             } else {
                 batch.push({"url":newUrl, "depth":newDepth});  //linkObj
-                data.nodes.push({id: newUrl});
+                nodeList.push(newUrl);
                 visited[newUrl] = true;
             }
         }
@@ -291,7 +297,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     urlQueue.push(nextUrl);
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
-                data.nodes.push({id: nextUrl});
+                nodeList.push(nextUrl);
                 data.links.push({source: navObj.linkObj.url, target: nextUrl});
             }
             if (navObj.found == true) {
@@ -301,6 +307,9 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
     }
-    //console.log(data);
+    var uniqueNodes = deDuplicateUrls(nodeList);
+    for (node in uniqueNodes) {
+        data.nodes.push({id: uniqueNodes[node]});
+    }
     return data;
 }
