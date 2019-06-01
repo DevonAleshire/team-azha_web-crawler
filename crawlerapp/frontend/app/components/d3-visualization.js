@@ -26,17 +26,17 @@ export default Component.extend({
             .append('g')
             .attr('class', 'nodes')
 
-        //Label - DO WE WANT A LABEL WITH THE TOOLTIP TOO???
-        //Uncomment to add label to each node, does not always look the best
-        // node.append('text')
-        //   .attr('x', 25)
-        //   .attr('y', 3)
-        //   .text(d => d.id);
-
         //Draw Circle for each Node
         let circles = node.append('circle')
             .attr('r', 12)//Create circle with radius size
-            .attr('fill', 'blue')
+            .attr('fill', function(d){
+                console.log('D: ', d)
+                if(d.id === 'https://www.google.com/'){
+                    return 'yellow'
+                }else{
+                    return 'blue'
+                }
+            })
             //Mouse events for each node
             //This is copy pasted code from https://bl.ocks.org/almsuarez/4333a12d2531d6c1f6f22b74f2c57102
             .on('mouseover.tooltip', function (d) {
