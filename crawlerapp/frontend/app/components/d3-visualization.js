@@ -96,8 +96,9 @@ export default Component.extend({
         function tickAction() {
             node //Used to position
                 .attr("transform", function (d) {
-                    return "translate(" + d.x + "," + d.y + ")";
-                })
+                    return "translate(" + (d.x = Math.max(13, Math.min(960 - 13, d.x))) + "," 
+                    + (d.y = Math.max(13, Math.min(600 - 13, d.y))) + ")"
+                });
 
             //For Links
             //update link positions 

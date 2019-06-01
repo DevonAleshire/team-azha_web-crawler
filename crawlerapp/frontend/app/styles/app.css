@@ -2,6 +2,7 @@
 @import 'components/nav-bar.css';
 @import 'components/search-history.css';
 @import 'components/d3-visualization.css';
+@import 'search.css';
 
 .upper-components {
     display: flex;
@@ -32,10 +33,10 @@ table {
 }
 
 .lds-roller {
-    display: none;
     position: relative;
     width: 64px;
     height: 64px;
+    margin-top: 10%;
     left: calc(50% - 32px);
   }
   .lds-roller div {
