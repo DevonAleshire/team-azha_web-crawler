@@ -17,10 +17,17 @@ export default Route.extend({
                         `&depth=${formData.depth}` +
                         `&keyword=${formData.keyword}`;
 
+            //Start Time
+            var t0 = performance.now();
              return fetch(apiUrl)
                 .then(res => res.json())
                 .then((data) => {
-                    console.log('data', data);
+                    //Finish Time
+                    var t1 = performance.now();
+                    console.log(formData.searchMethod, ' took ', (t1-t0), ' milliseconds')
+                    console.log('Data: ', data)
+                    console.table(data.nodes);
+                    console.table(data.links)
                     return data
                 }).catch((e) => console.log('Failed to retreive data from BE: ', e)); 
         };

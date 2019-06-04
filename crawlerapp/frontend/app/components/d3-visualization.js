@@ -6,11 +6,14 @@ import { transition } from 'd3-transition'
 export default Component.extend({
     didInsertElement() {
         const data = this.model;
-        console.log('Data:', this.model)
+        //console.log('Data:', this.model)
 
         //Select SVG
-        let svg = select('svg');
-        console.log('SVG: ', svg)
+        let svg = select('svg'),
+        width = +svg.attr('width'),
+        height = +svg.attr('height');
+
+        console.log('SVG: ', svg, ' Height/Width - ', height, ' / ', width)
 
         //Create tooltip
         var tooltip = select("body")
@@ -30,11 +33,19 @@ export default Component.extend({
         let circles = node.append('circle')
             .attr('r', 12)//Create circle with radius size
             .attr('fill', function(d){
-                console.log('D: ', d)
-                if(d.id === 'https://www.google.com/'){
-                    return 'yellow'
+                //console.log('D: ', d)
+                //console.log("Data Search Node: ", data.searchNode, ' === ', d.id, ' : Node Url -> ', data.searchNode === d.id)
+
+                if(data.keywordFound && (data.keywordNode === d.id)){
+                    console.log('Keyword Node: ', d.id)
+                    return '#F1FA72' //Yellow
+                }
+                else if(d.depth === 0){
+                    console.log('Search Node: ', d.id)
+                    return '#72FA77'//Green
+                    
                 }else{
-                    return 'blue'
+                    return '#618BEC' //Blue
                 }
             })
             //Mouse events for each node
@@ -43,8 +54,9 @@ export default Component.extend({
                 tooltip.transition()
                     .duration(300)
                     .style("opacity", .8);
-
-                tooltip.html("Name:" + d.id + "<p/>group:" + d.group)
+                
+                var depth = d.depth === 0 ? 'Source': d.depth;
+                tooltip.html("<span class='tooltipLabel'>URL</span><br>" + d.id + "<p/><span class='tooltipLabel'>Depth</span>: " + depth)
                     .style("left", (event.pageX) + "px")
                     .style("top", (event.pageY + 10) + "px");
             })
@@ -71,9 +83,10 @@ export default Component.extend({
         simulation
             //Charge force, repel when nodes get too close
             //Greater negative strength greater the repel force
-            .force('charge_force', forceManyBody().strength(-500))
-            .force('center_force', forceCenter(960 / 2, 600 / 2))//Drives nodes to center of svg
-            //.force("collisionForce", forceCollide().strength(1));
+            .force('charge_force', forceManyBody().strength(80).distanceMax(400).distanceMin(80))
+            .force('center_force', forceCenter(1500 / 2, 1000 / 2))//Drives nodes to center of svg
+            //.force("collisionForce", forceCollide().strength(.2))
+            .force("collisionForce", forceCollide(20).strength(1).iterations(100))
 
         //Add link-force
         let link_force = forceLink(data.links).id(function (d) { return d.id; });
@@ -89,6 +102,28 @@ export default Component.extend({
             .enter()//For each link in links group
             .append('line')//Create line
             .attr('stroke-width', 2);//Draw line
+        
+        
+            link.attr('class', 'links')
+            .on('mouseover.tooltip', function(d) {
+                tooltip.transition()
+                    .duration(300)
+                    .style("opacity", .8);
+                tooltip.html("<span class='tooltipLabel'>Source</span>: "+ d.source.id + 
+                            "<p/><span class='tooltipLabel'>Target</span>: " + d.target.id)
+                    .style("left", (event.pageX) + "px")
+                    .style("top", (event.pageY + 10) + "px");
+                })
+                .on("mouseout.tooltip", function() {
+                tooltip.transition()
+                    .duration(100)
+                    .style("opacity", 0);
+                })
+                .on('mouseout.fade', fade(1))
+                .on("mousemove", function() {
+                tooltip.style("left", (event.pageX) + "px")
+                    .style("top", (event.pageY + 10) + "px");
+                });
 
         //On every tick take tickAction
         simulation.on('tick', tickAction);
@@ -96,8 +131,8 @@ export default Component.extend({
         function tickAction() {
             node //Used to position
                 .attr("transform", function (d) {
-                    return "translate(" + (d.x = Math.max(13, Math.min(960 - 13, d.x))) + "," 
-                    + (d.y = Math.max(13, Math.min(600 - 13, d.y))) + ")"
+                    return "translate(" + (d.x = Math.max(13, Math.min(1500 - 13, d.x))) + "," 
+                    + (d.y = Math.max(13, Math.min(1000 - 13, d.y))) + ")"
                 });
 
             //For Links
@@ -119,9 +154,12 @@ export default Component.extend({
                     this.setAttribute('fill-opacity', thisOpacity);
                     return thisOpacity;
                 });
+
+                link.style('stroke-opacity', o => (o.source === d || o.target === d ? 1 : opacity));
             }
         }
 
+        
         const linkedByIndex = {};
         data.links.forEach(d => {
             linkedByIndex[`${d.source.index},${d.target.index}`] = 1;
