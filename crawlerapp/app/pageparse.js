@@ -8,48 +8,52 @@ var robotsParser = require('robots-parser');
 
 module.exports = {
 
-    searchHelper: async function(url, searchType, searchDepth, keyword) {
+    searchHelper: async function (url, searchType, searchDepth, keyword) {
         process.setMaxListeners(Infinity);
+
         if (searchType == "dfs") {
             return this.crawlDepthFirstHelper(url, searchDepth, keyword);
         } else {
             return await this.crawlBreadthFirstHelper(url, searchDepth, keyword);
         }
     },
-    crawlDepthFirstHelper: async function(url, searchDepth, keyword) {
+    crawlDepthFirstHelper: async function (url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
-        console.log(data);
+        //console.log(data);
         return data;
     },
-    crawlDepthFirst: async function(url, searchDepth, currentDepth, keyword) {
+    crawlDepthFirst: async function (url, searchDepth, currentDepth, keyword) {
         var urlStack = [];
-        var nodeList = [];
+        //var nodeList = [];
+        var nodeList = new Map();
         var visited = {};
         urlStack.push(new processUrl.URL(url).href);
 
         var found = false;
         var newDepth = currentDepth;
 
-        var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
-
-        for (var i = 0; i < searchDepth ; i++) {
+        var data = { nodes: [], links: [], keywordFound: false, keywordNode: "", searchNode: url };
+        console.log("New Depth: ", newDepth, " - Search Depth: ", searchDepth)
+        for (var i = 0; i < searchDepth; i++) {
             var nextUrl = urlStack.pop();
             var linkObj = {};
             if (newDepth > searchDepth || found == true) {
                 break;
             } else {
-                linkObj = {"url":nextUrl, "depth":newDepth};
-                nodeList.push(nextUrl);
+                linkObj = { "url": nextUrl, "depth": newDepth };
                 visited[nextUrl] = true;
             }
-            
-            var navObj = await getPage(linkObj, keyword)
-            .then(await function (res) {return res;})
-            .catch(err => {
-                console.log(err);
-            });
 
-            console.log("Nav Object: ", navObj.urls)
+            var navObj = await getPage(linkObj, keyword)
+                .then(await function (res) { return res; })
+                .catch(err => {
+                    console.log(err);
+                });
+
+            console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
+            //nodeList.push({ url: navObj.linkObj.url, depth: newDepth });
+            if (!nodeList.has(navObj.linkObj.url)) nodeList.set(navObj.linkObj.url, newDepth);
+
             var randomUrl = await chooseRandomUrl(navObj.urls, visited);
 
             if (randomUrl == "") {
@@ -59,23 +63,31 @@ module.exports = {
                 urlStack.push(randomUrl);
                 newDepth = newDepth + 1;
             }
-            
-            data.links.push({source: navObj.linkObj.url, target: randomUrl});
-            nodeList.push(randomUrl);
+
+            data.links.push({ source: navObj.linkObj.url, target: randomUrl });
+            console.log('Random Url: ', randomUrl)
+            //nodeList.push({ url: randomUrl, depth: newDepth })
+            //nodeList.push(randomUrl);
+            if (!nodeList.has(randomUrl)) nodeList.set(randomUrl, newDepth);
+
             found = navObj.found;
             if (found) {
                 data.keywordFound = true;
                 data.keywordNode = navObj.linkObj.url;
             }
         }
-        var uniqueNodes = deDuplicateUrls(nodeList);
-        for (node in uniqueNodes) {
-            data.nodes.push({id: uniqueNodes[node]});
+        //var uniqueNodes = deDuplicateUrls(nodeList);
+        for (var [k, v] of nodeList) {
+            data.nodes.push({ id: k, depth: v });
         }
+        // for (node in uniqueNodes) {
+        //     console.log("Unique Node: ", uniqueNodes[node])
+        //     data.nodes.push({ id: uniqueNodes[node].url, depth: uniqueNodes[node].depth });
+        // }
         //console.log(data);
         return data;
     },
-    crawlBreadthFirstHelper: async function(url, searchDepth, keyword) {
+    crawlBreadthFirstHelper: async function (url, searchDepth, keyword) {
         bfsKeyword = false;
         bfsVisited = {};
         var data = await crawlBreadthFirst(url, searchDepth, 0, keyword);
@@ -83,15 +95,15 @@ module.exports = {
     }
 };
 
-function parseHtml (url, html) {
+function parseHtml(url, html) {
     try {
         //Iterate through each <a> tag
         var urlList = [];
-        cheerio('a', html).each(function() {
+        cheerio('a', html).each(function () {
             //Get the href attribute of the <a> tag
             var nextUrl = cheerio(this).attr('href');
             var cleanUrl = false;
-            
+
             //Some a tags do not have an href property and will resolve as undefined
             if (nextUrl != undefined) {
                 //Prepend to relative path if protocol and domain info are missing
@@ -102,7 +114,7 @@ function parseHtml (url, html) {
                 } catch (err) {
                     isValid = false;
                 }
-                
+
                 var mimeType = mime.getType(cleanUrl);
 
                 //Check the mime type of the destination, only push html or potential html destinations
@@ -119,10 +131,10 @@ function parseHtml (url, html) {
     }
 }
 
-async function navigateUrl (url) {
+async function navigateUrl(url) {
     try {
         var urlObj = new processUrl.URL(url);
-        
+
         var robots = robotsParser(urlObj.origin + '/robots.txt', '*');
         var delayMs = robots.getCrawlDelay('*') == undefined ? 0 : robots.getCrawlDelay('*');
         var isAllowed = robots.isAllowed(url, '*');
@@ -136,13 +148,13 @@ async function navigateUrl (url) {
         } else {
             var options = {
                 uri: url
-                ,'headers': {
+                , 'headers': {
                     'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
                 }
-                ,'timeout': 5000
+                , 'timeout': 5000
             };
             await delay(delayMs);       //Observe robots crawl delay
-            return await rp(options).then(async function(htmlString) {
+            return await rp(options).then(async function (htmlString) {
                 //console.log(htmlString);
                 htmlObj["html"] = htmlString;
                 htmlObj["status"] = "allowed";
@@ -163,7 +175,7 @@ async function navigateUrl (url) {
     }
 }
 
-function deDuplicateUrls (urlArr) {
+function deDuplicateUrls(urlArr) {
     try {
         //Create a new array of unique URLs only and return
         return [...new Set(urlArr)];
@@ -173,13 +185,13 @@ function deDuplicateUrls (urlArr) {
     }
 }
 
-async function chooseRandomUrl (urls, visited) {
+async function chooseRandomUrl(urls, visited) {
     try {
         var randomUrl = "";
 
         //If there are no URLS return an empty string
         if (urls.length == 0) { return randomUrl };
-        
+
         var chosen = false;
         var tryCount = 0;
         while (!chosen && tryCount < 5) {
@@ -192,19 +204,19 @@ async function chooseRandomUrl (urls, visited) {
             //Don't get the body, just the header and test it for text/html
             var options = {
                 uri: nextUrl
-                ,'headers': {
+                , 'headers': {
                     'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
                 }
-                ,'timeout': 7500
+                , 'timeout': 7500
             };
             var isHtml = await rp.head(options)
-            .then(async function(res) {
-                return res['content-type'].includes('text/html');
-            }).catch((err) => {
-                //console.log(err);
-                console.log(nextUrl + " - FAILED GET HEAD");
-                return false;
-            });
+                .then(async function (res) {
+                    return res['content-type'].includes('text/html');
+                }).catch((err) => {
+                    //console.log(err);
+                    console.log(nextUrl + " - FAILED GET HEAD");
+                    return false;
+                });
 
             if (visited[nextUrl] == undefined && isHtml) {
                 chosen = true;
@@ -222,10 +234,11 @@ function findKeyword(html, keyword) {
     var found = false;
     var lKeyword = keyword.toLowerCase();
     (async () => {
-        await cheerio(html).each(function() {
+        await cheerio(html).each(function () {
             if (cheerio(this).get(0).type == 'text') {
                 if (cheerio(this).text().toLowerCase().includes(lKeyword)) {
                     found = true;
+                    console.log('Search for keyword: ', keyword, ' - ', linkObj.url, ' was found: ', toReturn.found)
                 }
             } else if (cheerio(this).get(0).type == 'tag' && cheerio(this).name != 'script') {
                 if (cheerio(this).text().toLowerCase().includes(lKeyword)) {
@@ -239,10 +252,15 @@ function findKeyword(html, keyword) {
 
 async function getPage(linkObj, keyword) {
     var htmlObj = await navigateUrl(linkObj.url);
-    var toReturn = {};
+    var toReturn = { found: false };
 
     toReturn.urls = await parseHtml(htmlObj.url, htmlObj.html);
-    toReturn.found = findKeyword(htmlObj.html, keyword);
+
+    if (keyword !== "null") {
+        toReturn.found = findKeyword(htmlObj.html, keyword);
+        if (toReturn.found) { console.log('Search for keyword: ', keyword, ' - ', linkObj.url, ' was found: ', toReturn.found) }
+    }
+
     toReturn.linkObj = linkObj;
 
     return toReturn;
@@ -254,7 +272,8 @@ const delay = ms => new Promise(res => setTimeout(res, ms));
 async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var urlQueue = [];
     var depthQueue = [];
-    var nodeList = [];
+    //var nodeList = [];
+    var nodeList = new Map();
     var visited = {};
 
     urlQueue.push(new processUrl.URL(url).href);
@@ -267,29 +286,30 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
 
     var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
-    while (urlQueue.length > 0 && found == false && depthHit == false)
-    {
+    while (urlQueue.length > 0 && found == false && depthHit == false) {
         var batch = [];
-        for (var i = 0; i < Math.min(queueLim, urlQueue.length) ; i++) {
+        for (var i = 0; i < Math.min(queueLim, urlQueue.length); i++) {
             newDepth = depthQueue.shift();
             newUrl = urlQueue.shift();
             if (newDepth > searchDepth) {
                 depthHit = true;
             } else {
-                batch.push({"url":newUrl, "depth":newDepth});  //linkObj
-                nodeList.push(newUrl);
+                batch.push({ "url": newUrl, "depth": newDepth });  //linkObj
+                
+                //nodeList.push(newUrl);
+                if(!nodeList.has(newUrl)) { nodeList.set(newUrl, newDepth) }
                 visited[newUrl] = true;
             }
         }
 
-        var batchRes = await Promise.all(batch.map(async function(linkObj){
+        var batchRes = await Promise.all(batch.map(async function (linkObj) {
             //console.log("calling " + linkObj.url);
             return await getPage(linkObj, keyword);
         }))
-        .then(await function (res) {return res;})
-        .catch(err => {
-            console.log(err);
-        });
+            .then(await function (res) { return res; })
+            .catch(err => {
+                console.log(err);
+            });
         for (each in batchRes) {
             var navObj = batchRes[each];
             for (url in navObj.urls) {
@@ -298,8 +318,11 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     urlQueue.push(nextUrl);
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
-                nodeList.push(nextUrl);
-                data.links.push({source: navObj.linkObj.url, target: nextUrl});
+                
+                //nodeList.push(nextUrl);
+                
+                if(!nodeList.has(nextUrl)) { nodeList.set(nextUrl, navObj.linkObj.depth + 1) }
+                data.links.push({ source: navObj.linkObj.url, target: nextUrl });
             }
             if (navObj.found == true) {
                 data.keywordFound = true;
@@ -308,9 +331,12 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
     }
-    var uniqueNodes = deDuplicateUrls(nodeList);
-    for (node in uniqueNodes) {
-        data.nodes.push({id: uniqueNodes[node]});
+    for (var [k, v] of nodeList) {
+        data.nodes.push({ id: k, depth: v });
     }
+    // var uniqueNodes = deDuplicateUrls(nodeList);
+    // for (node in uniqueNodes) {
+    //     data.nodes.push({ id: uniqueNodes[node] });
+    // }
     return data;
 }
