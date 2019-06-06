@@ -1,13 +1,45 @@
 .form-container {
-    margin: 50px auto;
+    margin: 50px 0px;
     padding: 2%;
     background-color: white;
     box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
    font-family: 'Abel', sans-serif;
 }
 
+[type="radio"]:checked+span:after, [type="radio"].with-gap:checked+span:before, [type="radio"].with-gap:checked+span:after {
+    border: 2px solid #00A8E8;
+}
+
+[type="radio"]:checked+span:after, [type="radio"].with-gap:checked+span:after {
+    background-color: #00A8E8;
+}
+
+input[type=text]:not(.browser-default):focus:not([readonly]) {
+    border-bottom: 1px solid #007EA7;
+}
+
+input[type=text]:not(.browser-default):focus:not([readonly])+label {
+    color: #007EA7;
+}
+
+input[type=number]:not(.browser-default):focus:not([readonly]) {
+    border-bottom: 1px solid #007EA7;
+}
+
+input[type=number]:not(.browser-default):focus:not([readonly])+label {
+    color: #007EA7;
+}
+
 .form-component {
-    flex-basis: 30%;
+    width: 30%;
+}
+
+.btn {
+    background-color: #007EA7;
+}
+
+.btn:hover {
+    background-color: #00A8E8;
 }
 
 .inline-form-row {
@@ -57,7 +89,7 @@
 
 .search-depth-radio{
     margin-left: 5%; 
-    color: #26A69A 
+    color:#007EA7;;
 }
 #dfs-radio {
     display: none;
@@ -72,18 +104,18 @@ input:-webkit-autofill:active  {
 
 @media screen and (max-width: 1400px) {
     .form-component{
-        flex-basis: 40%;
+        width: 40%;
     }
 }
 
 @media screen and (max-width: 1000px) {
     .form-component{
-        flex-basis: 80%;
+        width: 80%;
     }
 }
 
 @media screen and (max-width: 480px) {
     .form-component{
-        flex-basis: 95%;
+       width: 95%;
     }
 }

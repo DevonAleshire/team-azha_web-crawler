@@ -1,6 +1,6 @@
 .history-component {
-    margin-top: 50px;
-    flex-basis:  45%;
+    margin: 50px 0  100px 0;
+    width: 30%;
     overflow-y: scroll;
     max-height: 400px;
     font-size: 1.2em;
@@ -50,14 +50,20 @@
     margin-top: 8px;
 }
 
+@media screen and (max-width: 1400px) {
+    .history-component{
+        width: 40%;
+    }
+}
+
 @media screen and (max-width: 1000px) {
     .history-component{
-        flex-basis: 80%;
+        width: 80%;
     }
 }
 @media screen and (max-width: 480px) {
     .history-component {
-        flex-basis: 95%;
+        width: 95%;
     }
     .btn {
         padding: 0 5px;
