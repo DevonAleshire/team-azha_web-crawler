@@ -8,3 +8,32 @@
 .search-button {
     margin: 50px 0;
 }
+
+.search-visualization {
+    margin-bottom: 500px;
+}
+
+.return-button .btn {
+        background-color: transparent;
+        border: 1px solid #007EA7;;
+        color: #007EA7;
+}
+
+.return-button .btn:hover {
+    background-color:#00A8E8;
+    color: white;
+}
+
+.search-row-container {
+    width: 1500px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-top: 50px;
+}
+
+.search-info-container-visualization {
+    background-color: white;
+    flex-basis: 30%;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
