@@ -38,9 +38,10 @@ export default Route.extend({
         };
         const returnData = formParams.then(record => record.data)
                   .then((data) => makeApiCall(data)); 
-
+        
         return RSVP.hash({
             data: returnData,
+            requestData: formParams
         });
     },
 });

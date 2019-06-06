@@ -3,6 +3,7 @@ export default function(){
       this.fromRoute('dashboard'),
       this.toRoute('loading'),
       this.use('toLeft'),
+      this.reverse('toRight')
     );
 
     this.transition(
