@@ -19,12 +19,10 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function (url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
-        //console.log(data);
         return data;
     },
     crawlDepthFirst: async function (url, searchDepth, currentDepth, keyword) {
         var urlStack = [];
-        //var nodeList = [];
         var nodeList = new Map();
         var visited = {};
         urlStack.push(new processUrl.URL(url).href);
@@ -50,9 +48,10 @@ module.exports = {
                     console.log(err);
                 });
 
-            console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
-            //nodeList.push({ url: navObj.linkObj.url, depth: newDepth });
-            if (!nodeList.has(navObj.linkObj.url)) nodeList.set(navObj.linkObj.url, newDepth);
+            //console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
+            if (!nodeList.has(navObj.linkObj.url)){ 
+                 nodeList.set(navObj.linkObj.url, newDepth);
+            }
 
             var randomUrl = await chooseRandomUrl(navObj.urls, visited);
 
@@ -65,10 +64,10 @@ module.exports = {
             }
 
             data.links.push({ source: navObj.linkObj.url, target: randomUrl });
-            console.log('Random Url: ', randomUrl)
-            //nodeList.push({ url: randomUrl, depth: newDepth })
-            //nodeList.push(randomUrl);
-            if (!nodeList.has(randomUrl)) nodeList.set(randomUrl, newDepth);
+            
+            if (!nodeList.has(randomUrl)){
+                nodeList.set(randomUrl, newDepth);
+            }
 
             found = navObj.found;
             if (found) {
@@ -76,15 +75,11 @@ module.exports = {
                 data.keywordNode = navObj.linkObj.url;
             }
         }
-        //var uniqueNodes = deDuplicateUrls(nodeList);
+
         for (var [k, v] of nodeList) {
             data.nodes.push({ id: k, depth: v });
         }
-        // for (node in uniqueNodes) {
-        //     console.log("Unique Node: ", uniqueNodes[node])
-        //     data.nodes.push({ id: uniqueNodes[node].url, depth: uniqueNodes[node].depth });
-        // }
-        //console.log(data);
+
         return data;
     },
     crawlBreadthFirstHelper: async function (url, searchDepth, keyword) {
@@ -256,7 +251,7 @@ async function getPage(linkObj, keyword) {
 
     toReturn.urls = await parseHtml(htmlObj.url, htmlObj.html);
 
-    if (keyword !== "null") {
+    if (keyword) {
         toReturn.found = findKeyword(htmlObj.html, keyword);
         if (toReturn.found) { console.log('Search for keyword: ', keyword, ' - ', linkObj.url, ' was found: ', toReturn.found) }
     }
@@ -266,13 +261,12 @@ async function getPage(linkObj, keyword) {
     return toReturn;
 }
 
-//https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
+//Ref: https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line/51482993#51482993
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var urlQueue = [];
     var depthQueue = [];
-    //var nodeList = [];
     var nodeList = new Map();
     var visited = {};
 
@@ -295,9 +289,9 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 depthHit = true;
             } else {
                 batch.push({ "url": newUrl, "depth": newDepth });  //linkObj
-                
-                //nodeList.push(newUrl);
-                if(!nodeList.has(newUrl)) { nodeList.set(newUrl, newDepth) }
+                if(!nodeList.has(newUrl)) { 
+                    nodeList.set(newUrl, newDepth) 
+                }
                 visited[newUrl] = true;
             }
         }
@@ -319,9 +313,10 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
                 
-                //nodeList.push(nextUrl);
-                
-                if(!nodeList.has(nextUrl)) { nodeList.set(nextUrl, navObj.linkObj.depth + 1) }
+                if(!nodeList.has(nextUrl)) {
+                     nodeList.set(nextUrl, navObj.linkObj.depth + 1) 
+                }
+
                 data.links.push({ source: navObj.linkObj.url, target: nextUrl });
             }
             if (navObj.found == true) {
@@ -334,9 +329,5 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     for (var [k, v] of nodeList) {
         data.nodes.push({ id: k, depth: v });
     }
-    // var uniqueNodes = deDuplicateUrls(nodeList);
-    // for (node in uniqueNodes) {
-    //     data.nodes.push({ id: uniqueNodes[node] });
-    // }
     return data;
 }

@@ -1,19 +1,20 @@
+/* eslint-disable no-console */
 import Component from '@ember/component';
 import { select } from 'd3-selection';
 import { forceSimulation, forceCenter, forceManyBody, forceLink, forceCollide } from 'd3-force';
-import { transition } from 'd3-transition'
+// import { transition } from 'd3-transition'
 
 export default Component.extend({
     didInsertElement() {
         const data = this.model;
-        //console.log('Data:', this.model)
 
         //Select SVG
         let svg = select('svg'),
         width = +svg.attr('width'),
         height = +svg.attr('height');
 
-        console.log('SVG: ', svg, ' Height/Width - ', height, ' / ', width)
+        //SVG Properties
+        //console.log('SVG: ', svg, ' Height/Width - ', height, ' / ', width)
 
         //Create tooltip
         var tooltip = select("body")
@@ -33,11 +34,9 @@ export default Component.extend({
         let circles = node.append('circle')
             .attr('r', 12)//Create circle with radius size
             .attr('fill', function(d){
-                //console.log('D: ', d)
-                //console.log("Data Search Node: ", data.searchNode, ' === ', d.id, ' : Node Url -> ', data.searchNode === d.id)
 
                 if(data.keywordFound && (data.keywordNode === d.id)){
-                    console.log('Keyword Node: ', d.id)
+                    console.log('Keyword Node: ', d.id, ' - Keyword: ', data.keyword)
                     return '#F1FA72' //Yellow
                 }
                 else if(d.depth === 0){
@@ -81,13 +80,15 @@ export default Component.extend({
         //Create Forces 
         //Add Forces - Resource: https://www.d3indepth.com/force-layout/
         simulation
-            //Charge force, repel when nodes get too close
-            //Greater negative strength greater the repel force
+            /*Charge Force: Repel when nodes get too close. Greater negative strength greater the repel force*/
             .force('charge_force', forceManyBody().strength(80).distanceMax(400).distanceMin(80))
-            .force('center_force', forceCenter(1500 / 2, 1000 / 2))//Drives nodes to center of svg
+            /*Center Force: Drive nodes to center of SVG based on width and height of element*/
+            .force('center_force', forceCenter(width / 2, height / 2))
+            /*Collision Force: Keeps nodes from overlapping*/
             //.force("collisionForce", forceCollide().strength(.2))
             .force("collisionForce", forceCollide(20).strength(1).iterations(100))
 
+        /*Link Force: Assists in creating a fixed distance between connected elements*/
         //Add link-force
         let link_force = forceLink(data.links).id(function (d) { return d.id; });
         //Add forceLink to simulation
@@ -131,8 +132,8 @@ export default Component.extend({
         function tickAction() {
             node //Used to position
                 .attr("transform", function (d) {
-                    return "translate(" + (d.x = Math.max(13, Math.min(1500 - 13, d.x))) + "," 
-                    + (d.y = Math.max(13, Math.min(1000 - 13, d.y))) + ")"
+                    return "translate(" + (d.x = Math.max(13, Math.min(width - 13, d.x))) + "," 
+                    + (d.y = Math.max(13, Math.min(height - 13, d.y))) + ")"
                 });
 
             //For Links
