@@ -8,7 +8,7 @@ module.exports = function (router) {
     // });
 
     router.route('/api/search').get(function (req, res) {
-        console.log('Hello from the node server');  
+        console.log('Search Request Received');  
 
         return searchFunctions.searchHelper(req.query.url, req.query.searchMethod, req.query.depth, req.query.keyword)
             .then(r => res.json(r));
