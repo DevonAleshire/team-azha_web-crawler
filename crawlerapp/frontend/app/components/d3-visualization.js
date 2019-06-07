@@ -137,7 +137,7 @@ export default Component.extend({
                     .style("top", (event.pageY + 10) + "px");
             })
             //Add Click Event
-            .on('click', function (d) { console.table(event); console.table(d); }); //window.open(d.id) 
+            .on('click', function (d) { window.open(d.id) });  
 
 
 
