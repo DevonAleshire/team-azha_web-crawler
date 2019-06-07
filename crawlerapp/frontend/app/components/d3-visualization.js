@@ -9,7 +9,7 @@ import { transition } from 'd3-transition' //Required for tooltip.transition()
 export default Component.extend({
     didInsertElement() {
         const data = this.model;
-
+        console.log(data)
         //Select SVG
         let svg = select('svg'),
             width = +svg.attr('width'),
@@ -192,8 +192,8 @@ export default Component.extend({
         }
 
         function dragged(d) {
-            console.log(event); 
-            console.log(d)
+            //console.log(event); 
+            //console.log(d)
             d.fx = event.offsetX;
             d.fy = event.offsetY;
         }
