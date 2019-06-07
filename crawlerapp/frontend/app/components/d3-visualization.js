@@ -2,7 +2,7 @@
 import Component from '@ember/component';
 import { select } from 'd3-selection';
 import { forceSimulation, forceCenter, forceManyBody, forceLink, forceCollide } from 'd3-force';
-// import { transition } from 'd3-transition'
+import { transition } from 'd3-transition'
 
 export default Component.extend({
     didInsertElement() {

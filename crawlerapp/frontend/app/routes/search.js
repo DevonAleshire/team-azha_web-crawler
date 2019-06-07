@@ -42,6 +42,6 @@ export default Route.extend({
         return RSVP.hash({
             data: returnData,
             requestData: formParams
-        });
+        }).catch((e) => e);
     },
 });
