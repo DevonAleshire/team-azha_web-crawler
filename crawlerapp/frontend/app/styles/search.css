@@ -5,6 +5,17 @@
     align-items: center;
 }
 
+.search-container .history-header {
+    background-color:rgba(0, 23, 31, 0.774);
+    color: white;
+ }
+ 
+ .search-container .history-more-info {
+    background-color:rgba(0, 23, 31, 0.774);
+    color: white;
+}
+ 
+
 .search-button {
     margin: 50px 0;
     flex-basis: 20%;
@@ -24,7 +35,7 @@
 .return-button .btn {
         background-color: transparent;
         border: 1px solid #007EA7;;
-        color: #007EA7;
+        color: #00171f;;
 }
 
 .return-button .btn:hover {
@@ -39,7 +50,9 @@
     flex-basis: 20%;
     height: 100px;
     padding: 1%;
-    background: white;
+    background: transparent;
+    color: #00171f;
+    border: 1px solid #007EA7;
     box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
 }
 
