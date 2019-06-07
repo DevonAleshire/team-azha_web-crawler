@@ -26,7 +26,7 @@ export default Route.extend({
                     //Finish Time
                     var t1 = performance.now();
                     //Output total request time
-                    console.log(formData.searchMethod, ' took ', (t1-t0), ' milliseconds')
+                    console.log(formData.searchMethod, ' took ', (t1-t0), ' milliseconds for ', data.nodes.length, " nodes.")
                     console.log('Data: ', data)
 
                     //Uncomment to see data tables of nodes and links (Tested in Chrome)

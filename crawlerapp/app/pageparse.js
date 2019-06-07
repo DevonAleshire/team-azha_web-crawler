@@ -48,32 +48,37 @@ module.exports = {
                     console.log(err);
                 });
 
-            //console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
-            if (!nodeList.has(navObj.linkObj.url)){ 
-                 nodeList.set(navObj.linkObj.url, newDepth);
-            }
-
-            var randomUrl = await chooseRandomUrl(navObj.urls, visited);
-
-            if (randomUrl == "") {
-                //No valid random URL found
-                break;
-            } else {
-                urlStack.push(randomUrl);
-                newDepth = newDepth + 1;
-            }
-
-            data.links.push({ source: navObj.linkObj.url, target: randomUrl });
-            
-            if (!nodeList.has(randomUrl)){
-                nodeList.set(randomUrl, newDepth);
+            console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
+            if (!nodeList.has(navObj.linkObj.url)) {
+                nodeList.set(navObj.linkObj.url, newDepth);
             }
 
             found = navObj.found;
+
             if (found) {
                 data.keywordFound = true;
                 data.keywordNode = navObj.linkObj.url;
             }
+            else {
+                var randomUrl = await chooseRandomUrl(navObj.urls, visited);
+                console.log('Random Url: ', randomUrl)
+
+                if (randomUrl == "") {
+                    //No valid random URL found
+                    break;
+                } else {
+                    urlStack.push(randomUrl);
+                    newDepth = newDepth + 1;
+                }
+
+                if (!nodeList.has(randomUrl)) {
+                    nodeList.set(randomUrl, newDepth);
+                    data.links.push({ source: navObj.linkObj.url, target: randomUrl });
+                }
+            }
+
+
+
         }
 
         for (var [k, v] of nodeList) {
@@ -86,6 +91,7 @@ module.exports = {
         bfsKeyword = false;
         bfsVisited = {};
         var data = await crawlBreadthFirst(url, searchDepth, 0, keyword);
+        console.log('***** BFS Completed *****')
         return data;
     }
 };
@@ -285,19 +291,20 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
         for (var i = 0; i < Math.min(queueLim, urlQueue.length); i++) {
             newDepth = depthQueue.shift();
             newUrl = urlQueue.shift();
+            console.log('Current Depth: ', newDepth, ' - Search Depth: ', searchDepth)
             if (newDepth > searchDepth) {
                 depthHit = true;
             } else {
                 batch.push({ "url": newUrl, "depth": newDepth });  //linkObj
-                if(!nodeList.has(newUrl)) { 
-                    nodeList.set(newUrl, newDepth) 
+                if (!nodeList.has(newUrl)) {
+                    nodeList.set(newUrl, newDepth)
                 }
                 visited[newUrl] = true;
             }
         }
 
         var batchRes = await Promise.all(batch.map(async function (linkObj) {
-            //console.log("calling " + linkObj.url);
+            console.log("calling " + linkObj.url);
             return await getPage(linkObj, keyword);
         }))
             .then(await function (res) { return res; })
@@ -312,12 +319,11 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     urlQueue.push(nextUrl);
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
-                
-                if(!nodeList.has(nextUrl)) {
-                     nodeList.set(nextUrl, navObj.linkObj.depth + 1) 
-                }
 
-                data.links.push({ source: navObj.linkObj.url, target: nextUrl });
+                if ((navObj.linkObj.depth + 1 <= searchDepth) && !nodeList.has(nextUrl)) {
+                    nodeList.set(nextUrl, navObj.linkObj.depth + 1)
+                    data.links.push({ source: navObj.linkObj.url, target: nextUrl });
+                }
             }
             if (navObj.found == true) {
                 data.keywordFound = true;
@@ -326,8 +332,10 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
     }
+
     for (var [k, v] of nodeList) {
         data.nodes.push({ id: k, depth: v });
     }
+
     return data;
 }
