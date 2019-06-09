@@ -159,8 +159,8 @@ async function navigateUrl(url) {
                 .then(async function (res) {
                     return res['content-type'].includes('text/html');
                 }).catch((err) => {
-                    console.log(err);
-                    console.log(urlObj + " - FAILED GET HEAD");
+                    //console.log(err);
+                    //console.log(urlObj + " - FAILED GET HEAD");
                     return false;
                 });
             if (isHtml) {
@@ -186,6 +186,9 @@ async function navigateUrl(url) {
                         return htmlObj;
                     }
                 });
+            } else {
+                htmlObj["status"] = "NavigationError";
+                return htmlObj;
             }
         }
     } catch (err) {
@@ -234,7 +237,7 @@ async function chooseRandomUrl(urls, visited) {
                     return res['content-type'].includes('text/html');
                 }).catch((err) => {
                     //console.log(err);
-                    console.log(nextUrl + " - FAILED GET HEAD");
+                    //console.log(nextUrl + " - FAILED GET HEAD");
                     return false;
                 });
 
