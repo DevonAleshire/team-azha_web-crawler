@@ -35,9 +35,9 @@ export default Component.extend({
             .force('charge_force', forceManyBody())//.strength(-10).distanceMax(400).distanceMin(25))
             /*Center Force: Drive nodes to center of SVG based on width and height of element*/
             .force('center_force', forceCenter(width / 2, height / 2))
-        /*Collision Force: Keeps nodes from overlapping*/
-        //.force("collisionForce", forceCollide().strength(.2))
-        //.force("collisionForce", forceCollide(20).strength(1).iterations(20))
+            /*Collision Force: Keeps nodes from overlapping*/
+            //.force("collisionForce", forceCollide().strength(.2))
+            .force("collisionForce", forceCollide(20).strength(1).iterations(20))
 
         /*Link Force: Assists in creating a fixed distance between connected elements*/
         //Add link-force
