@@ -283,7 +283,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var found = false;
     var newDepth = currentDepth;
     var depthHit = false;
-    var queueLim = 20;
+    var queueLim = 10;
 
     var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
