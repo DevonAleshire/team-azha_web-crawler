@@ -304,7 +304,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
 
- //       if(newDepth <= searchDepth){
+        if(newDepth <= searchDepth){
             var batchRes = await Promise.all(batch.map(async function (linkObj) {
                 return await getPage(linkObj, keyword);
             }))
@@ -312,10 +312,10 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 .catch(err => {
                     console.log(err);
                 });
-        // }
-        // else{
-        //     console.log('Trying to run search at wrong depth')
-        // }
+        }
+        else{
+            console.log('Trying to run search at wrong depth')
+        }
         
         for (each in batchRes) {
             var navObj = batchRes[each];
