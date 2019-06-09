@@ -19,6 +19,7 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function (url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log('***** DFS Completed *****')
         return data;
     },
     crawlDepthFirst: async function (url, searchDepth, currentDepth, keyword) {
@@ -48,7 +49,7 @@ module.exports = {
                     console.log(err);
                 });
 
-            console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
+            console.log(`Current Url: ${navObj.linkObj.url}\nCurrent Depth: ${newDepth}\n`)
             if (!nodeList.has(navObj.linkObj.url)) {
                 nodeList.set(navObj.linkObj.url, newDepth);
             }
@@ -61,7 +62,7 @@ module.exports = {
             }
             else {
                 var randomUrl = await chooseRandomUrl(navObj.urls, visited);
-                console.log('Random Url: ', randomUrl)
+                console.log(`Random Url: ${randomUrl}\n`)
 
                 if (randomUrl == "") {
                     //No valid random URL found
@@ -259,7 +260,7 @@ async function getPage(linkObj, keyword) {
 
     if (keyword) {
         toReturn.found = findKeyword(htmlObj.html, keyword);
-        if (toReturn.found) { console.log('Search for keyword: ', keyword, ' - ', linkObj.url, ' was found: ', toReturn.found) }
+        if (toReturn.found) { console.log('Search for keyword: ', keyword, ' at -> ', linkObj.url, ' was found: ', toReturn.found) }
     }
 
     toReturn.linkObj = linkObj;
@@ -291,7 +292,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
         for (var i = 0; i < Math.min(queueLim, urlQueue.length); i++) {
             newDepth = depthQueue.shift();
             newUrl = urlQueue.shift();
-            console.log('Current Depth: ', newDepth, ' - Search Depth: ', searchDepth)
+
             if (newDepth > searchDepth) {
                 depthHit = true;
             } else {
@@ -303,14 +304,19 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
 
-        var batchRes = await Promise.all(batch.map(async function (linkObj) {
-            console.log("calling " + linkObj.url);
-            return await getPage(linkObj, keyword);
-        }))
-            .then(await function (res) { return res; })
-            .catch(err => {
-                console.log(err);
-            });
+ //       if(newDepth <= searchDepth){
+            var batchRes = await Promise.all(batch.map(async function (linkObj) {
+                return await getPage(linkObj, keyword);
+            }))
+                .then(await function (res) { return res; })
+                .catch(err => {
+                    console.log(err);
+                });
+        // }
+        // else{
+        //     console.log('Trying to run search at wrong depth')
+        // }
+        
         for (each in batchRes) {
             var navObj = batchRes[each];
             for (url in navObj.urls) {
@@ -321,8 +327,9 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 }
 
                 if ((navObj.linkObj.depth + 1 <= searchDepth) && !nodeList.has(nextUrl)) {
-                    nodeList.set(nextUrl, navObj.linkObj.depth + 1)
+                    nodeList.set(nextUrl, navObj.linkObj.depth + 1);
                     data.links.push({ source: navObj.linkObj.url, target: nextUrl });
+                    console.log(`Adding new link ->\nSource: ${navObj.linkObj.url}\nTarget: ${nextUrl}\n`)
                 }
             }
             if (navObj.found == true) {
