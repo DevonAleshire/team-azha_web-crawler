@@ -147,32 +147,60 @@ async function navigateUrl(url) {
             htmlObj["status"] = "disallowed";
             return htmlObj;
         } else {
-            var options = {
-                uri: url
+            var headerOptions = {
+                uri: urlObj
                 , 'headers': {
                     'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
                 }
-                , 'timeout': 5000
+                , 'timeout': 3000
             };
-            await delay(delayMs);       //Observe robots crawl delay
-            return await rp(options).then(async function (htmlString) {
-                //console.log(htmlString);
-                htmlObj["html"] = htmlString;
-                htmlObj["status"] = "allowed";
-                return htmlObj;
-            }).catch((err) => {
-                if (err.name == "TimeoutError") {
-                    htmlObj["status"] = err.name;
+            var isHtml = await rp.head(headerOptions)
+                .then(async function (res) {
+                    return res['content-type'].includes('text/html');
+                }).catch((err) => {
+                    console.log(err);
+                    console.log(urlObj + " - FAILED GET HEAD");
+                    return false;
+                });
+            if (isHtml) {
+                var options = {
+                    uri: urlObj
+                    , 'headers': {
+                        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
+                    }
+                    , 'timeout': 5000
+                };
+                await delay(delayMs);       //Observe robots crawl delay
+                return await rp(options).then(async function (htmlString) {
+                    htmlObj["html"] = htmlString;
+                    htmlObj["status"] = "allowed";
+                    //console.log("SIZE " + JSON.stringify(htmlObj).length + url);
                     return htmlObj;
-                } else {
-                    htmlObj["status"] = "NavigationError";
-                    return htmlObj;
-                }
-            });
+                }).catch((err) => {
+                    if (err.name == "TimeoutError") {
+                        htmlObj["status"] = err.name;
+                        return htmlObj;
+                    } else {
+                        htmlObj["status"] = "NavigationError";
+                        return htmlObj;
+                    }
+                });
+            }
         }
     } catch (err) {
+        //console.log(err);
         htmlObj["status"] = "NavigationError";
         return htmlObj;
+    }
+}
+
+function deDuplicateUrls(urlArr) {
+    try {
+        //Create a new array of unique URLs only and return
+        return [...new Set(urlArr)];
+    } catch (err) {
+        console.log(err);
+        return;
     }
 }
 
@@ -282,7 +310,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var found = false;
     var newDepth = currentDepth;
     var depthHit = false;
-    var queueLim = 20;
+    var queueLim = 3;
 
     var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
