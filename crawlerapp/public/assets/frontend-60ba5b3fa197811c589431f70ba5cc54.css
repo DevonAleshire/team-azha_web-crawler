@@ -1,0 +1,29 @@
+@import 'components/user-input-form-2af3bcb08142e9a1292b0ab313d85c46.css';
+@import 'components/nav-bar-1b4716f7223a35426b3fd591ba601e1e.css';
+@import 'components/search-history-b112aecbbc91fc8dc72e8d136dcfab94.css';
+@import 'components/d3-visualization-cda85a4657c912e5b96dcd787d4c708a.css';
+@import 'search-1092c6b314fddbb6002009c73fa83a53.css';
+@import 'loading-17a58d648e52006a453570157032bef7.css';
+
+.upper-components {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    width: 100%;
+}
+
+.lower-components {
+    text-align: center;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Abel', sans-serif;
+ 
+  background: #00B4DB;  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to bottom, #0083B0, #00B4DB);  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to top, #0083B0, rgba(0, 179, 219, 0.164)); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  
+}
