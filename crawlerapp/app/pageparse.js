@@ -19,6 +19,7 @@ module.exports = {
     },
     crawlDepthFirstHelper: async function (url, searchDepth, keyword) {
         var data = await this.crawlDepthFirst(url, searchDepth, 0, keyword);
+        console.log('***** DFS Completed *****')
         return data;
     },
     crawlDepthFirst: async function (url, searchDepth, currentDepth, keyword) {
@@ -48,7 +49,7 @@ module.exports = {
                     console.log(err);
                 });
 
-            console.log("Current Url: ", navObj.linkObj.url, ' - Current Depth: ', newDepth)
+            console.log(`Current Url: ${navObj.linkObj.url}\nCurrent Depth: ${newDepth}\n`)
             if (!nodeList.has(navObj.linkObj.url)) {
                 nodeList.set(navObj.linkObj.url, newDepth);
             }
@@ -61,7 +62,7 @@ module.exports = {
             }
             else {
                 var randomUrl = await chooseRandomUrl(navObj.urls, visited);
-                console.log('Random Url: ', randomUrl)
+                console.log(`Random Url: ${randomUrl}\n`)
 
                 if (randomUrl == "") {
                     //No valid random URL found
@@ -147,30 +148,48 @@ async function navigateUrl(url) {
             htmlObj["status"] = "disallowed";
             return htmlObj;
         } else {
-            var options = {
-                uri: url
+            var headerOptions = {
+                uri: urlObj
                 , 'headers': {
                     'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
                 }
-                , 'timeout': 5000
+                , 'timeout': 3000
             };
-            await delay(delayMs);       //Observe robots crawl delay
-            return await rp(options).then(async function (htmlString) {
-                //console.log(htmlString);
-                htmlObj["html"] = htmlString;
-                htmlObj["status"] = "allowed";
-                return htmlObj;
-            }).catch((err) => {
-                if (err.name == "TimeoutError") {
-                    htmlObj["status"] = err.name;
+            var isHtml = await rp.head(headerOptions)
+                .then(async function (res) {
+                    return res['content-type'].includes('text/html');
+                }).catch((err) => {
+                    console.log(err);
+                    console.log(urlObj + " - FAILED GET HEAD");
+                    return false;
+                });
+            if (isHtml) {
+                var options = {
+                    uri: urlObj
+                    , 'headers': {
+                        'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"
+                    }
+                    , 'timeout': 5000
+                };
+                await delay(delayMs);       //Observe robots crawl delay
+                return await rp(options).then(async function (htmlString) {
+                    htmlObj["html"] = htmlString;
+                    htmlObj["status"] = "allowed";
+                    //console.log("SIZE " + JSON.stringify(htmlObj).length + url);
                     return htmlObj;
-                } else {
-                    htmlObj["status"] = "NavigationError";
-                    return htmlObj;
-                }
-            });
+                }).catch((err) => {
+                    if (err.name == "TimeoutError") {
+                        htmlObj["status"] = err.name;
+                        return htmlObj;
+                    } else {
+                        htmlObj["status"] = "NavigationError";
+                        return htmlObj;
+                    }
+                });
+            }
         }
     } catch (err) {
+        //console.log(err);
         htmlObj["status"] = "NavigationError";
         return htmlObj;
     }
@@ -259,7 +278,7 @@ async function getPage(linkObj, keyword) {
 
     if (keyword) {
         toReturn.found = findKeyword(htmlObj.html, keyword);
-        if (toReturn.found) { console.log('Search for keyword: ', keyword, ' - ', linkObj.url, ' was found: ', toReturn.found) }
+        if (toReturn.found) { console.log('Search for keyword: ', keyword, ' at -> ', linkObj.url, ' was found: ', toReturn.found) }
     }
 
     toReturn.linkObj = linkObj;
@@ -282,7 +301,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var found = false;
     var newDepth = currentDepth;
     var depthHit = false;
-    var queueLim = 20;
+    var queueLim = 3;
 
     var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
@@ -291,7 +310,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
         for (var i = 0; i < Math.min(queueLim, urlQueue.length); i++) {
             newDepth = depthQueue.shift();
             newUrl = urlQueue.shift();
-            console.log('Current Depth: ', newDepth, ' - Search Depth: ', searchDepth)
+
             if (newDepth > searchDepth) {
                 depthHit = true;
             } else {
@@ -303,14 +322,16 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
             }
         }
 
-        var batchRes = await Promise.all(batch.map(async function (linkObj) {
-            console.log("calling " + linkObj.url);
-            return await getPage(linkObj, keyword);
-        }))
-            .then(await function (res) { return res; })
-            .catch(err => {
-                console.log(err);
-            });
+        if(newDepth <= searchDepth){
+            var batchRes = await Promise.all(batch.map(async function (linkObj) {
+                return await getPage(linkObj, keyword);
+            }))
+                .then(await function (res) { return res; })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+        
         for (each in batchRes) {
             var navObj = batchRes[each];
             for (url in navObj.urls) {
@@ -321,8 +342,9 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 }
 
                 if ((navObj.linkObj.depth + 1 <= searchDepth) && !nodeList.has(nextUrl)) {
-                    nodeList.set(nextUrl, navObj.linkObj.depth + 1)
+                    nodeList.set(nextUrl, navObj.linkObj.depth + 1);
                     data.links.push({ source: navObj.linkObj.url, target: nextUrl });
+                    console.log(`Adding new link ->\nSource: ${navObj.linkObj.url}\nTarget: ${nextUrl}\n`)
                 }
             }
             if (navObj.found == true) {

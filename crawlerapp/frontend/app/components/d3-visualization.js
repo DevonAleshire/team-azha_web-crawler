@@ -9,7 +9,7 @@ import { transition } from 'd3-transition' //Required for tooltip.transition()
 export default Component.extend({
     didInsertElement() {
         const data = this.model;
-        console.log(data)
+
         //Select SVG
         let svg = select('svg'),
             width = +svg.attr('width'),
@@ -32,11 +32,11 @@ export default Component.extend({
         //Add Forces - Resource: https://www.d3indepth.com/force-layout/
         simulation
             /*Charge Force: Repel when nodes get too close. Greater negative strength greater the repel force*/
-            .force('charge_force', forceManyBody())//.strength(-10).distanceMax(400).distanceMin(25))
+            .force('charge_force', forceManyBody().strength(-10).distanceMax(400).distanceMin(25))
             /*Center Force: Drive nodes to center of SVG based on width and height of element*/
             .force('center_force', forceCenter(width / 2, height / 2))
             /*Collision Force: Keeps nodes from overlapping*/
-            .force("collisionForce", forceCollide(20).strength(1).iterations(20))
+            .force("collisionForce", forceCollide(20).strength(1))
 
         /*Link Force: Assists in creating a fixed distance between connected elements*/
         //Add link-force
@@ -142,7 +142,6 @@ export default Component.extend({
 
         function tickAction() {
             // node
-            // .attr('transform', d => `translate(${d.x},${d.y})`);
             node //Used to position
                 .attr("transform", function (d) {
                     return "translate(" + (d.x = Math.max(13, Math.min(width - 13, d.x))) + ","
@@ -181,7 +180,6 @@ export default Component.extend({
         function isConnected(a, b) {
             return linkedByIndex[`${a.index},${b.index}`] || linkedByIndex[`${b.index},${a.index}`] || a.index === b.index;
         }
-
 
         //Drag Events
         function dragstarted(d) {
