@@ -283,7 +283,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
     var found = false;
     var newDepth = currentDepth;
     var depthHit = false;
-    var queueLim = 10;
+    var queueLim = 20;
 
     var data = { nodes: [], links: [], keywordFound: false, keywordNode: "" };
 
@@ -312,9 +312,6 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                 .catch(err => {
                     console.log(err);
                 });
-        }
-        else{
-            console.log('Trying to run search at wrong depth')
         }
         
         for (each in batchRes) {
