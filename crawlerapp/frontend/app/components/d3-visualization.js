@@ -48,7 +48,7 @@ export default Component.extend({
         simulation.on('tick', tickAction);
         window.setTimeout(function () {
             simulation.stop();
-        }, 15000);
+        }, 10000);
 
 
         /*ADD LINKS*/
