@@ -323,7 +323,7 @@ async function crawlBreadthFirst(url, searchDepth, currentDepth, keyword) {
                     depthQueue.push(navObj.linkObj.depth + 1);
                 }
 
-                if (nextUrl && (navObj.linkObj.depth + 1 <= searchDepth) && !nodeList.has(nextUrl)) {
+                if ((navObj.linkObj.depth + 1 <= searchDepth) && !nodeList.has(nextUrl)) {
                     nodeList.set(nextUrl, navObj.linkObj.depth + 1);
                     data.links.push({ source: navObj.linkObj.url, target: nextUrl });
                     console.log(`Adding new link ->\nSource: ${navObj.linkObj.url}\nTarget: ${nextUrl}\n`)
