@@ -36,7 +36,6 @@ export default Component.extend({
             /*Center Force: Drive nodes to center of SVG based on width and height of element*/
             .force('center_force', forceCenter(width / 2, height / 2))
             /*Collision Force: Keeps nodes from overlapping*/
-            //.force("collisionForce", forceCollide().strength(.2))
             .force("collisionForce", forceCollide(20).strength(1).iterations(20))
 
         /*Link Force: Assists in creating a fixed distance between connected elements*/
@@ -49,7 +48,7 @@ export default Component.extend({
         simulation.on('tick', tickAction);
         window.setTimeout(function () {
             simulation.stop();
-        }, 3000);
+        }, 10000);
 
 
         /*ADD LINKS*/
@@ -96,7 +95,7 @@ export default Component.extend({
                 .on("end", dragended));
 
         //Draw Circle for each Node
-        let circles = node.append('circle')
+        node.append('circle')
             .attr('r', 12)//Create circle with radius size
             .attr('fill', function (d) {
 
@@ -192,20 +191,13 @@ export default Component.extend({
         }
 
         function dragged(d) {
-            //console.log(event); 
-            //console.log(d)
             d.fx = event.offsetX;
             d.fy = event.offsetY;
         }
 
         function dragended() {
             if (!event.active) simulation.alphaTarget(0);
-            //simulation.stop()
+            simulation.stop()
         }
-
-        //   function releasenode(d) {
-        //       d.fx = null;
-        //       d.fy = null;
-        //   }
     }
 });
