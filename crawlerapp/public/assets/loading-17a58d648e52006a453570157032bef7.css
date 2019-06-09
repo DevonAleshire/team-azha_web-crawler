@@ -1,35 +1,14 @@
-@import 'components/user-input-form-51ea0325ab6dd6ab69015afab3801fda.css';
-@import 'components/nav-bar-a35c560f36ee96b51cdb3daee0d43fe2.css';
-@import 'components/search-history-9a110c14afc6677278eb4374e6e54229.css';
-@import 'components/d3-visualization-c092c0accb47190958d9c118d6c55f4a.css';
-@import 'search-72fc524a056d08a368ded9fc98b1222b.css';
-
-.upper-components {
-    display: flex;
-    justify-content: space-around;
-    flex-wrap: wrap;
-    align-items: flex-start;
+.loading-container {
+  margin-bottom: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-content: center;
 }
 
-.lower-components {
-    text-align: center;
-}
-
-.brand-logo {
-    margin-left: 0px;
-}
-
-body {
-    background-color: #e0e0e0;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-   font-family: 'Abel', sans-serif;
-}
-
-table {
-    border-collapse: collapse;
-    table-layout: fixed;
+.loading-container .search-button {
+  margin-top: 100px;
+  align-self: center;
 }
 
 .lds-roller {
@@ -50,7 +29,7 @@ table {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: rgb(100, 54, 228);
+    background: white;
     margin: -3px 0 0 -3px;
   }
   .lds-roller div:nth-child(1) {
