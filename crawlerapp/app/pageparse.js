@@ -204,16 +204,6 @@ function deDuplicateUrls(urlArr) {
     }
 }
 
-function deDuplicateUrls(urlArr) {
-    try {
-        //Create a new array of unique URLs only and return
-        return [...new Set(urlArr)];
-    } catch (err) {
-        console.log(err);
-        return;
-    }
-}
-
 async function chooseRandomUrl(urls, visited) {
     try {
         var randomUrl = "";
