@@ -21,7 +21,7 @@ export default Component.extend({
                 url: this.get('url'),
                 searchMethod: this.searchMethod,
                 depth: this.get('depth'),
-                keyword: this.get('keyword')
+                keyword: this.get('keyword'),
             });
 
             searchRequest.save();
@@ -32,7 +32,7 @@ export default Component.extend({
             this.set('depth', '');
             this.set('keyword', '');
 
-            this.get('router').transitionTo('/dashboard/search/' + searchRequest.id);
+            this.get('router').transitionTo('/search/' + searchRequest.id);
         },
         methodChanged(value){
             if (value === 'dfs') {

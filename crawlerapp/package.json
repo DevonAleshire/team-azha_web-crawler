@@ -17,8 +17,8 @@
     "cheerio": "^1.0.0-rc.3",
     "express": "^4.16.4",
     "mime": "^2.4.3",
-    "puppeteer": "^1.15.0",
     "request": "^2.88.0",
+    "request-promise-native": "^1.0.7",
     "robots-parser": "^2.1.1",
     "valid-url": "^1.0.9"
   },

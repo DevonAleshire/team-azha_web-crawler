@@ -1,0 +1,56 @@
+<div class="search-container">
+    <div class="search-row-container">
+        <div class="search-button">
+        {{#link-to 'dashboard'}}
+            <div class="return-button">
+                <a class="waves-effect waves-light btn">Perform Another Search</a>
+            </div>
+        {{/link-to}}  
+    </div>
+    <div class="search-info-container-visualization">
+        <div class="history-header">
+               {{model.requestData.url}}
+            </div>
+            <div class = "history-more-info">
+                <div class="history-section">
+                    <div class="section-title">Method</div> 
+                    <div>{{model.requestData.searchMethod}}</div>
+                </div>
+                <div class="history-section"> 
+                    <div class="section-title">Depth</div>  
+                    <div>{{model.requestData.depth}}</div>
+                </div>
+                {{#if model.requestData.keyword}}
+                    <div class="history-section">
+                        <div class="section-title">Keyword</div>  
+                        <div>{{model.requestData.keyword}}</div>
+                    </div>
+                {{/if}}
+            </div>
+    </div>
+    <div class="node-key">
+        <div class="node-item">
+            <div>Default Node</div>
+            <div class="default-node"></div>
+        </div>
+        <div class="node-item">
+            <div>Source Node</div>
+            <div class="source-node"></div>
+        </div>
+        <div class="node-item">
+            <div>Keyword Node</div>
+            <div class="keyword-node"></div>
+        </div>
+    </div>
+    </div>
+    {{#if model.data}}
+    <div class="search-visualization"> 
+        {{d3-visualization model=model.data}}
+    </div>
+    {{else}}
+    <div class="search-error">
+        <h2>Sorry, we know you've been waiting awhile :(</h2>
+        <h3>Please try a different search.</h3>
+    </div>
+    {{/if}}
+</div>

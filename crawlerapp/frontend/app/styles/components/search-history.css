@@ -1,0 +1,71 @@
+.history-component {
+    margin: 50px 0  100px 0;
+    width: 30%;
+    overflow-y: scroll;
+    max-height: 400px;
+    font-size: 1.2em;
+}
+
+.history-header {
+   padding: 3% 0 3% 25px;
+   background-color: white;
+   font-size: 1.3em;
+   font-family: 'Abel', sans-serif;
+}
+
+.history-more-info {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    text-align: center;
+    padding: 0 25px 10px 25px;
+    background: white;  
+}
+
+.history-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+
+}
+
+.section-title {
+    color: #00A8E8;
+}
+
+.list-item {
+    margin-bottom: 15px;
+    -webkit-box-shadow: 0 10px 6px -6px #777;
+    -moz-box-shadow: 0 10px 6px -6px #777;
+    box-shadow: 0 10px 6px -6px #777;
+}
+
+.list-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.second-button {
+    margin-top: 8px;
+}
+
+@media screen and (max-width: 1400px) {
+    .history-component{
+        width: 40%;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    .history-component{
+        width: 80%;
+    }
+}
+@media screen and (max-width: 480px) {
+    .history-component {
+        width: 95%;
+    }
+    .btn {
+        padding: 0 5px;
+    }
+}

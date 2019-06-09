@@ -1,0 +1,41 @@
+.backend-list {
+  background: transparent;
+  /* box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23); */
+  padding: 1%;
+  margin-top: 50px
+}
+
+.links line {
+    stroke: #999;
+    pointer-events: all;
+  }
+
+  .nodes circle {
+    stroke: #ea1a1a;
+    stroke-width: 1.5px;
+    pointer-events: all;
+  }
+
+  text {
+    font-family: sans-serif;
+    font-size: 20px;
+  }
+
+  div.tooltip {
+    position: absolute;
+    background-color: white;
+    max-width: 350px;
+    height: auto;
+    padding: 1px;
+    border-style: solid;
+    border-radius: 4px;
+    border-width: 1px;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+    pointer-events: none;
+    padding: 7px;
+  }
+
+  .tooltipLabel{
+    text-decoration: underline;
+    font-weight: bold;
+  }

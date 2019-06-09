@@ -5,7 +5,7 @@
         {{input value=url id="search-url" type="text"
         required=true pattern='https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
         title="URL's should be in the format http(s):// + hostname + TLD. Example: https://google.com"}}
-        <label for="search-url" class="active">Url to Search</label>
+        <label for="search-url">Url to Search</label>
     </div>
     <div class="radio-buttons">
         <div class="radio-button-div">
@@ -47,7 +47,7 @@
             </button>
         </div>
      <div>
-     <a {{action 'clearForm'}} class="waves-effect waves-teal btn-flat">Clear Form</a>
+     <a {{action 'clearForm'}} class="waves-effect waves-red btn-flat">Clear Form</a>
 
      </div>
     </div>
